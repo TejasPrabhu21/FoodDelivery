@@ -1,15 +1,28 @@
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Button,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import InputField from "@/components/inputField";
 import { images, icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
-import { useCallback } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { AntDesign } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 const Profile = () => {
   const onSignOutPress = useCallback(async () => {}, []);
-
   return (
     <SafeAreaView className="flex-1">
       <ScrollView

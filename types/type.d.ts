@@ -19,3 +19,12 @@ declare interface ButtonProps extends TouchableOpacityProps {
   IconRight?: React.ComponentType<any>;
   className?: string;
 }
+
+declare interface ItemData {
+  id: number;
+  name: string;
+  image: string;
+  time: string;
+  type: string;
+  price: number;
+}

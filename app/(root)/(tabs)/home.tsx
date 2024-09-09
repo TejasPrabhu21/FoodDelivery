@@ -1,20 +1,35 @@
 import {
-  Alert,
-  StyleSheet,
   Text,
   View,
   ScrollView,
-  Pressable,
   TextInput,
-  Image,
+  Button,
+  TouchableOpacity,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import * as Location from "expo-location";
-import * as LocationGeocoding from "expo-location";
-import { Octicons, Ionicons } from "@expo/vector-icons";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
+import { Octicons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ItemCards from "@/components/ItemCards";
+import {
+  CheckIfLocationEnabled,
+  GetCurrentLocation,
+} from "@/app/lib/location-utils";
+import { ItemData } from "@/types/type";
+import ItemDetails from "@/components/ItemDetails";
 
 const Home = () => {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
@@ -23,64 +38,17 @@ const Home = () => {
   );
 
   const [data, setData] = useState([]);
+  const [selectedItem, setSelectedItem] = useState<ItemData>();
 
   useEffect(() => {
-    CheckIfLocationEnabled();
-    GetCurrentLocation();
+    const setLocation = async () => {
+      setLocationServicesEnabled(await CheckIfLocationEnabled());
+      const location = await GetCurrentLocation();
+      setDisplayCurrentAddress(location ?? "Location not detected ...");
+    };
+    setLocation();
   }, []);
 
-  const CheckIfLocationEnabled = async () => {
-    let enabled = await Location.hasServicesEnabledAsync();
-
-    if (!enabled) {
-      Alert.alert(
-        "Location Services not enabled",
-        "Please enable your location services to continue",
-        [{ text: "OK" }],
-        { cancelable: false }
-      );
-    } else {
-      setLocationServicesEnabled(true);
-    }
-  };
-
-  const GetCurrentLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission not granted",
-        "Allow the app to use the location service",
-        [{ text: "OK" }],
-        { cancelable: false }
-      );
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
-
-    if (location.coords) {
-      const { latitude, longitude } = location.coords;
-
-      let response = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-
-      const [fullAddress] = await LocationGeocoding.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-
-      for (let item of response) {
-        let address = `${fullAddress.formattedAddress}`;
-
-        setDisplayCurrentAddress(address);
-      }
-    }
-  };
   const items = [
     {
       id: 0,
@@ -136,100 +104,85 @@ const Home = () => {
     }
   }, []);
 
-  const [counts, setCounts] = useState(items.map(() => 1));
-  const incrementCount = (index: number) => {
-    const newCounts = [...counts];
-    newCounts[index]++;
-    setCounts(newCounts);
-  };
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["25%", "62%"], []);
 
-  const decrementCount = (index: number) => {
-    const newCounts = [...counts];
-    if (newCounts[index] > 1) {
-      newCounts[index]--;
-    }
-    setCounts(newCounts);
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log("handleSheetChanges", index);
+  }, []);
+
+  const handleClosePress = () => bottomSheetModalRef.current?.close();
+
+  // Function to open the sheet with the selected item
+  const handleItemPress = (item: ItemData) => {
+    setSelectedItem(item);
+    handlePresentModalPress();
   };
 
   return (
-    <SafeAreaView className="flex-1">
-      <View style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
-        <View className="flex flex-row items-center justify-between gap-3 p-3">
-          <Octicons name="location" size={24} color="#E52850" />
-          <View className="flex-1">
-            <Text className="font-JakartaBold">Deliver To</Text>
-            <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
-              {displayCurrentAddress}
-            </Text>
+    <GestureHandlerRootView>
+      <SafeAreaView className="flex-1">
+        <View className="flex-1">
+          <View className="flex flex-row items-center justify-between gap-3 p-3">
+            <Octicons name="location" size={24} color="#E52850" />
+            <View className="flex-1">
+              <Text className="font-JakartaBold">Deliver To</Text>
+              <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
+                {displayCurrentAddress}
+              </Text>
+            </View>
+            <Link href={"/(root)/profile"}>
+              <View className="flex items-center justify-center bg-primary-300  rounded-full h-10 w-10">
+                <Text>T</Text>
+              </View>
+            </Link>
           </View>
-          <Link href={"/(root)/profile"}>
-            <View className="flex items-center justify-center bg-primary-300  rounded-full h-10 w-10">
-              <Text>T</Text>
-            </View>
-          </Link>
+
+          <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
+            <TextInput
+              className=" flex-1 p-2"
+              placeholder="Search for food, hotels"
+            />
+            <AntDesign name="search1" size={24} color="#E52B50" />
+          </View>
+
+          <ScrollView className="bg-gray-100">
+            <Text className=" text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
+              Explore
+            </Text>
+
+            <ItemCards items={items} onItemPress={handleItemPress} />
+          </ScrollView>
         </View>
 
-        <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-2 mx-3">
-          <TextInput
-            className=" flex-1 p-2"
-            placeholder="Search for food, hotels"
-          />
-          <AntDesign name="search1" size={24} color="#E52B50" />
-        </View>
-
-        <ScrollView className="bg-gray-100">
-          <Text className=" text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
-            Explore
-          </Text>
-
-          {items?.map((item, index) => (
-            <View className=" flex flex-row justify-between mx-3 mt-3 rounded-lg bg-white ">
-              <View>
-                <Image
-                  className=" w-32 h-32 m-2 rounded-lg"
-                  resizeMode="cover"
-                  source={{ uri: item?.image }}
-                />
-              </View>
-              <View className="flex-1 flex-col p-3 justify-between">
-                <View>
-                  <Text className="font-JakartaBold">{item?.name}</Text>
-                  <Text className="font-Jakarta text-gray-600 mt-1">
-                    {item?.type}
-                  </Text>
-                  <Text className="font-JakartaExtraBold text-xl my-2">
-                    {"₹ "}
-                    {item.price}
-                  </Text>
-                </View>
-
-                <View className="flex flex-row gap-2 items-center justify-between">
-                  <Text>
-                    <AntDesign name="clockcircleo" size={14} color="black" />{" "}
-                    {item?.time} mins
-                  </Text>
-                  <View className="flex flex-row items-center gap-2">
-                    <Pressable
-                      className="bg-red-200 p-1 rounded"
-                      onPress={() => decrementCount(index)}
-                    >
-                      <AntDesign name="minus" size={16} color="black" />
-                    </Pressable>
-                    <Text>{counts[index]}</Text>
-                    <Pressable
-                      className="bg-green-200 p-1 rounded"
-                      onPress={() => incrementCount(index)}
-                    >
-                      <AntDesign name="plus" size={16} color="black" />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+        <BottomSheetModalProvider>
+          <View className="shadow-xl">
+            <BottomSheetModal
+              ref={bottomSheetModalRef}
+              index={1}
+              snapPoints={snapPoints}
+              onChange={handleSheetChanges}
+              enableDismissOnClose={true}
+              stackBehavior="push"
+            >
+              <BottomSheetView>
+                <TouchableOpacity
+                  onPress={handleClosePress}
+                  className="w-full flex items-end justify-end px-5 pb-1"
+                >
+                  <Octicons name="x" size={28} color={"#6c757d"} />
+                </TouchableOpacity>
+                <ItemDetails item={selectedItem} />
+              </BottomSheetView>
+            </BottomSheetModal>
+          </View>
+        </BottomSheetModalProvider>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 

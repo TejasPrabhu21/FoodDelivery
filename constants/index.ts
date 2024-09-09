@@ -12,25 +12,21 @@ import home from "@/assets/icons/home.png";
 import list from "@/assets/icons/list.png";
 import lock from "@/assets/icons/lock.png";
 import map from "@/assets/icons/map.png";
-import marker from "@/assets/icons/marker.png";
 import out from "@/assets/icons/out.png";
 import person from "@/assets/icons/person.png";
 import pin from "@/assets/icons/pin.png";
 import point from "@/assets/icons/point.png";
 import profile from "@/assets/icons/profile.png";
 import search from "@/assets/icons/search.png";
-import selectedMarker from "@/assets/icons/selected-marker.png";
 import star from "@/assets/icons/star.png";
 import target from "@/assets/icons/target.png";
 import to from "@/assets/icons/to.png";
 import check from "@/assets/images/check.png";
-import getStarted from "@/assets/images/get-started.png";
 import message from "@/assets/images/message.png";
 import noResult from "@/assets/images/no-result.png";
-import welcome from "@/assets/images/welcome.jpg";
+import welcome from "@/assets/images/welcome.png";
 
 export const images = {
-  getStarted,
   check,
   noResult,
   message,
@@ -52,14 +48,13 @@ export const icons = {
   list,
   lock,
   map,
-  marker,
   out,
   person,
   pin,
   point,
   profile,
   search,
-  selectedMarker,
+
   star,
   target,
   to,
