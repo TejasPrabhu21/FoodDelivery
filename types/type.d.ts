@@ -20,11 +20,18 @@ declare interface ButtonProps extends TouchableOpacityProps {
   className?: string;
 }
 
-declare interface ItemData {
-  id: number;
+declare interface Product {
+  id: string;
   name: string;
   image: string;
   time: string;
   type: string;
+  price: number;
+}
+
+export interface CartItem {
+  id: string;
+  product: Product;
+  quantity: number;
   price: number;
 }
