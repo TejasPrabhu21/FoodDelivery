@@ -1,9 +1,12 @@
-import { ItemData } from "@/types/type";
 import { AntDesign } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { View, Pressable, Image, Text } from "react-native";
+import Counter from "./Counter";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { Product } from "@/types/type";
+import { useCart } from "@/providers/CartProvider";
 
-const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
+const ItemDetails = ({ item }: { item: Product | undefined }) => {
   const [count, setCount] = useState(1);
 
   const incrementCount = () => {
@@ -12,13 +15,15 @@ const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
 
   const decrementCount = () => {
     if (count > 1) {
-      setCount((count) => count + 1);
+      setCount((count) => count - 1);
     }
   };
 
-  function addToCart(): void {
-    throw new Error("Function not implemented.");
-  }
+  const { addItem } = useCart();
+
+  const addToCart = (item: Product, count: number): void => {
+    addItem(item, count);
+  };
 
   return (
     <>
@@ -49,32 +54,22 @@ const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
 
             <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-10 rounded-xl bg-gray-100">
               {/* Counter */}
-              <View className="flex flex-row items-center justify-center gap-2 px-2">
-                <Pressable
-                  className="bg-red-200 p-1 rounded"
-                  onPress={() => decrementCount()}
-                >
-                  <AntDesign name="minus" size={24} color="gray" />
-                </Pressable>
-                <Text className="text-2xl px-2">{count}</Text>
-                <Pressable
-                  className="bg-green-200 p-1 rounded"
-                  onPress={() => incrementCount()}
-                >
-                  <AntDesign name="plus" size={24} color="gray" />
-                </Pressable>
-              </View>
+              <Counter
+                count={count}
+                increment={incrementCount}
+                decrement={decrementCount}
+              />
 
               {/* Add to Cart Button */}
-              <Pressable
+              <TouchableOpacity
                 className="bg-primary-500 p-2 rounded-lg flex flex-row items-center justify-center space-x-4"
-                onPress={() => addToCart()}
+                onPress={() => addToCart(item, count)}
               >
                 <AntDesign name="shoppingcart" size={24} color="white" />
                 <Text className="text-white font-JakartaBold text-2xl">
                   Add to Cart
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

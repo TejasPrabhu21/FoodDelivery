@@ -28,8 +28,9 @@ import {
   CheckIfLocationEnabled,
   GetCurrentLocation,
 } from "@/app/lib/location-utils";
-import { ItemData } from "@/types/type";
+import { Product } from "@/types/type";
 import ItemDetails from "@/components/ItemDetails";
+import CartIcon from "@/components/CartIcon";
 
 const Home = () => {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
@@ -38,7 +39,7 @@ const Home = () => {
   );
 
   const [data, setData] = useState([]);
-  const [selectedItem, setSelectedItem] = useState<ItemData>();
+  const [selectedItem, setSelectedItem] = useState<Product>();
 
   useEffect(() => {
     const setLocation = async () => {
@@ -51,7 +52,7 @@ const Home = () => {
 
   const items = [
     {
-      id: 0,
+      id: "0",
       name: "Nandhana Palace",
       image:
         "https://b.zmtcdn.com/data/pictures/chains/3/50713/81d0735ce259a6bf800e16bb54cb9e5e.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
@@ -60,7 +61,7 @@ const Home = () => {
       price: 100,
     },
     {
-      id: 0,
+      id: "1",
       name: "GFC Biriyani",
       image:
         "https://b.zmtcdn.com/data/pictures/0/20844770/f9582144619b80d30566f497a02e2c8d.jpg?output-format=webp&fit=around|771.75:416.25&crop=771.75:416.25;*,*",
@@ -69,7 +70,7 @@ const Home = () => {
       price: 150,
     },
     {
-      id: 0,
+      id: "2",
       name: "Happiness Dhaba",
       image:
         "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
@@ -79,7 +80,7 @@ const Home = () => {
     },
 
     {
-      id: 0,
+      id: "3",
       name: "Happiness Dhaba",
       image:
         "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
@@ -88,7 +89,7 @@ const Home = () => {
       price: 250,
     },
     {
-      id: 0,
+      id: "4",
       name: "Happiness Dhaba",
       image:
         "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
@@ -118,25 +119,35 @@ const Home = () => {
   const handleClosePress = () => bottomSheetModalRef.current?.close();
 
   // Function to open the sheet with the selected item
-  const handleItemPress = (item: ItemData) => {
+  const handleItemPress = (item: Product) => {
     setSelectedItem(item);
     handlePresentModalPress();
   };
 
   return (
     <GestureHandlerRootView>
+      {/* <CartIcon /> */}
       <SafeAreaView className="flex-1">
         <View className="flex-1">
           <View className="flex flex-row items-center justify-between gap-3 p-3">
             <Octicons name="location" size={24} color="#E52850" />
             <View className="flex-1">
               <Text className="font-JakartaBold">Deliver To</Text>
-              <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={2}
+                className="text-gray-500 mt-1 line-clamp-2"
+              >
                 {displayCurrentAddress}
               </Text>
             </View>
+            <Link href={"/(root)/cart"}>
+              <View className="flex items-center justify-center border-2 border-gray-300 rounded-full h-12 w-12 ">
+                <AntDesign name="shoppingcart" size={24} color={"black"} />
+              </View>
+            </Link>
             <Link href={"/(root)/profile"}>
-              <View className="flex items-center justify-center bg-primary-300  rounded-full h-10 w-10">
+              <View className="flex items-center justify-center bg-primary-300  rounded-full h-12 w-12">
                 <Text>T</Text>
               </View>
             </Link>
@@ -154,13 +165,18 @@ const Home = () => {
             <Text className=" text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
               Explore
             </Text>
-
-            <ItemCards items={items} onItemPress={handleItemPress} />
+            {items.map((item, index) => (
+              <ItemCards
+                key={index}
+                item={item}
+                onItemPress={handleItemPress}
+              />
+            ))}
           </ScrollView>
         </View>
 
         <BottomSheetModalProvider>
-          <View className="shadow-xl">
+          <View className="shadow-xl z-50">
             <BottomSheetModal
               ref={bottomSheetModalRef}
               index={1}

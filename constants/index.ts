@@ -25,12 +25,15 @@ import check from "@/assets/images/check.png";
 import message from "@/assets/images/message.png";
 import noResult from "@/assets/images/no-result.png";
 import welcome from "@/assets/images/welcome.png";
+import googlePay from "@/assets/icons/google-pay.png";
+import emptyCart from "@/assets/icons/empty-cart.png";
 
 export const images = {
   check,
   noResult,
   message,
   welcome,
+  googlePay,
 };
 
 export const icons = {
@@ -54,8 +57,8 @@ export const icons = {
   point,
   profile,
   search,
-
   star,
   target,
   to,
+  emptyCart,
 };
