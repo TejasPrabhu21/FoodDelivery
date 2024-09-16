@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Linking, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { useNavigation } from 'expo-router';
 
 const Contact = () => {
+  const navigation = useNavigation();
   const handleCall = () => {
     Linking.openURL('tel:+919538505031');
   };
@@ -13,17 +15,23 @@ const Contact = () => {
   return (
     <SafeAreaView className="flex-1" >
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Contact Us</Text>
-
-      <View style={styles.contactItem}>
-        <MaterialIcons name="call" size={28} color="#9F5216"  />
-        <View style={styles.contactInfo}>
-          <Text style={styles.title}>Call us</Text>
-          <TouchableOpacity onPress={handleCall}>
-            <Text style={styles.text}>+91 9538505031</Text>
+    <View>
+    <TouchableOpacity className='mt-2' onPress={() => navigation.goBack()}>
+    <MaterialIcons name="arrow-back" size={28} color="#9F5216" />
+    <Text style={styles.heading}>Contact Us</Text>
           </TouchableOpacity>
+         
         </View>
-      </View>
+
+        <View style={styles.contactItem}>
+          <MaterialIcons name="call" size={28} color="#9F5216" />
+          <View style={styles.contactInfo}>
+            <Text style={styles.title}>Call us</Text>
+            <TouchableOpacity onPress={handleCall}>
+              <Text style={styles.text}>+91 9538505031</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
       <View style={styles.contactItem}>
         <FontAwesome name="envelope" size={28} color="#9F5216"  />

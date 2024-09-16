@@ -14,6 +14,10 @@ import InputField from "@/components/inputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Auth from "@/components/Auth";
+
+
+
 
 const SignIn = () => {
   const [form, setForm] = useState({
@@ -71,6 +75,7 @@ const SignIn = () => {
             />
 
             <OAuth />
+            <Auth />
 
             <Link
               href="/sign-up"

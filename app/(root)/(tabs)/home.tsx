@@ -14,10 +14,10 @@ import { BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@go
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ItemCards from "@/components/ItemCards";
 import { CheckIfLocationEnabled, GetCurrentLocation } from "@/app/lib/location-utils";
-import { ItemData } from "@/types/type";
+import { Product } from "@/types/type";
 import ItemDetails from "@/components/ItemDetails";
 import { supabase } from "@/lib/supabase";
-import { Link } from "expo-router";
+import { Link, useNavigation } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -25,13 +25,15 @@ const Home = () => {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
   const [displayCurrentAddress, setDisplayCurrentAddress] = useState("fetching your location ...");
   const [data, setData] = useState<any[] | null>(null);
-  const [selectedItem, setSelectedItem] = useState<ItemData | undefined>();
+  const [selectedItem, setSelectedItem] = useState<Product | undefined>();
   const [counts, setCounts] = useState<number[]>([]);
   const [fetchError, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const menuAnimation = useRef(new Animated.Value(-width * 0.75)).current;
+  const navigation = useNavigation(); // Use navigation hook
+
 
   useEffect(() => {
     const setLocation = async () => {
@@ -48,6 +50,7 @@ const Home = () => {
         const { data, error, status } = await supabase.from("Product").select("*");
         if (error) throw error;
         setData(data ?? []);
+        console.log("data",data);
         setStatus(status);
       } catch (error: any) {
         setError(error.message);
@@ -72,6 +75,8 @@ const Home = () => {
     }).start();
   };
 
+ 
+
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["25%", "62%"], []);
 
@@ -85,7 +90,7 @@ const Home = () => {
 
   const handleClosePress = () => bottomSheetModalRef.current?.close();
 
-  const handleItemPress = (item: ItemData) => {
+  const handleItemPress = (item: Product) => {
     setSelectedItem(item);
     handlePresentModalPress();
   };
@@ -124,7 +129,7 @@ const Home = () => {
           </Link>
 
           {/* Cart */}
-          <Link href="/profile" asChild>
+          <Link href="/cart" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
               <AntDesign name="shoppingcart" size={24} color="#9F5216"  />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Cart</Text>
@@ -156,7 +161,7 @@ const Home = () => {
       left: 20,    // Ensure it's aligned with other buttons
     }}
   ><AntDesign name="logout" size={24} color="#9F5216" />
-  <Text style={{ fontSize: 18, marginLeft: 10 }}>Sign Out</Text>
+  <Text style={{ fontSize: 18, marginLeft: 10}}>Sign Out</Text>
 </TouchableOpacity>
 
 
@@ -194,19 +199,23 @@ const Home = () => {
             </Text>
 
             {/* Use filtered data to display products */}
-            {filteredData && (
-              <ItemCards
-                items={filteredData.map((item) => ({
-                  id: item.id,
-                  name: item.Product_name,
-                  image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
-                  time: "20 - 30",
-                  type: "Seafood",
-                  price: item.Product_price,
-                }))}
-                onItemPress={handleItemPress}
-              />
-            )}
+            {filteredData && 
+  filteredData.map((item) => (
+    <ItemCards
+      key={item.id}
+      item={{
+        id: item.id,
+        name: item.Product_name,
+        image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
+        time: "20 - 30",
+        type: "Seafood",
+        price: item.Product_price,
+      }}
+      onItemPress={handleItemPress}
+    />
+  ))
+}
+
           </ScrollView>
         </View>
 
@@ -220,7 +229,7 @@ const Home = () => {
               enableDismissOnClose={true}
               stackBehavior="push"
             >
-              <BottomSheetView>
+            <BottomSheetView>
                 <TouchableOpacity onPress={handleClosePress} className="w-full flex items-end justify-end px-5 pb-1">
                   <Octicons name="x" size={28} color={"#6c757d"} />
                 </TouchableOpacity>

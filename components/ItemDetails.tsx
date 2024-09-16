@@ -1,10 +1,15 @@
-import { ItemData } from "@/types/type";
 import { AntDesign } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { View, Pressable, Image, Text } from "react-native";
+import Counter from "./Counter";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { Product } from "@/types/type";
+import { useCart } from "@/providers/CartProvider";
 
-const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
+const ItemDetails = ({ item }: { item: Product | undefined }) => {
   const [count, setCount] = useState(1);
+  const [isVisible, setIsVisible] = useState(true); // State to control visibility of the item card
+
 
   const incrementCount = () => {
     setCount((count) => count + 1);
@@ -16,18 +21,22 @@ const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
     }
   };
 
-  function addToCart(): void {
-    throw new Error("Function not implemented.");
-  }
+  const { addItem } = useCart();
+
+  const addToCart = (item: Product, count: number): void => {
+    addItem(item, count);
+    setIsVisible(false); // Hide the item card after adding to the cart
+
+  };
 
   return (
     <>
-      {item && (
+      {item && isVisible &&(
         <View>
           <View className="flex flex-col justify-center items-center">
             <Image
-              className=" w-11/12 h-56 m-2 rounded-lg"
-              resizeMode="cover"
+              className=" w-56 h-56 m-2 rounded-lg"
+              resizeMode="stretch"
               source={{ uri: item?.image }}
             />
           </View>
@@ -47,34 +56,24 @@ const ItemDetails = ({ item }: { item: ItemData | undefined }) => {
               </Text>
             </View>
 
-            <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-10 rounded-xl bg-gray-100">
+            <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-8 rounded-xl bg-gray-100">
               {/* Counter */}
-              <View className="flex flex-row items-center justify-center gap-2 px-2">
-                <Pressable
-                  className="bg-red-200 p-1 rounded"
-                  onPress={() => decrementCount()}
-                >
-                  <AntDesign name="minus" size={24} color="gray" />
-                </Pressable>
-                <Text className="text-2xl px-2">{count}</Text>
-                <Pressable
-                  className="bg-green-200 p-1 rounded"
-                  onPress={() => incrementCount()}
-                >
-                  <AntDesign name="plus" size={24} color="gray" />
-                </Pressable>
-              </View>
+              <Counter
+                count={count}
+                increment={incrementCount}
+                decrement={decrementCount}
+              />
 
               {/* Add to Cart Button */}
-              <Pressable
+              <TouchableOpacity
                 className="bg-primary-500 p-2 rounded-lg flex flex-row items-center justify-center space-x-4"
-                onPress={() => addToCart()}
+                onPress={() => addToCart(item, count)}
               >
                 <AntDesign name="shoppingcart" size={24} color="white" />
                 <Text className="text-white font-JakartaBold text-2xl">
                   Add to Cart
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
