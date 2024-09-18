@@ -38,12 +38,6 @@ const ItemCards = ({ item, onItemPress }: ItemCardProps) => {
             </Text>
           </View>
 
-          <View className="flex flex-row gap-2 items-center justify-between">
-            <Text>
-              <AntDesign name="clockcircleo" size={14} color="black" />
-              {item?.time} mins
-            </Text>
-          </View>
         </View>
       </Pressable>
     </>

@@ -1,187 +1,336 @@
 import {
-    CheckIfLocationEnabled,
-    GetCurrentLocation,
-  } from "@/app/lib/location-utils";
-  import CartItemCard from "@/components/CartItemCard";
-  import { icons, images } from "@/constants";
+  CheckIfLocationEnabled,
+  GetCurrentLocation,
+} from "@/app/lib/location-utils";
+import CartItemCard from "@/components/CartItemCard";
+import { icons, images } from "@/constants";
 import { supabase } from "@/lib/supabase";
-  import { CartContext, useCart } from "@/providers/CartProvider";
-  import { Product } from "@/types/type";
-  import { AntDesign, Octicons } from "@expo/vector-icons";
-  import { router } from "expo-router";
-  import React, { useContext, useEffect, useState } from "react";
-  import {
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-  } from "react-native";
-  import { SafeAreaView } from "react-native-safe-area-context";
-  
-  const Cart = () => {
-    const { items, totalPrice } = useCart();
-  
-    const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
-    const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
-      "fetching your location ..."
-    );
-  
-    const [data, setData] = useState([]);
-    const [selectedItem, setSelectedItem] = useState<Product>();
-    const [count, setCount] = useState(1);
-    const [phoneNumber, setPhoneNumber] = useState(""); // New state for phone number
-    const [phoneNumberError, setPhoneNumberError] = useState(false); // State for error handling
+import { useAuth } from "@/providers/AuthProvider";
+import { CartContext, useCart } from "@/providers/CartProvider";
+import { Product } from "@/types/type";
+import { AntDesign } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+const Cart = () => {
+  const { items, totalPrice } = useCart();
+  const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
+  const [displayCurrentAddress, setDisplayCurrentAddress] = useState("Fetching your location ...");
+  const [editableAddress, setEditableAddress] = useState(displayCurrentAddress);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumberError, setPhoneNumberError] = useState(false);
 
-  
-    useEffect(() => {
-      const setLocation = async () => {
-        setLocationServicesEnabled(await CheckIfLocationEnabled());
-        const location = await GetCurrentLocation();
-        setDisplayCurrentAddress(location ?? "Location not detected ...");
-      };
-      setLocation();
-    }, []);
+  // Calculate delivery fee based on total price
+  const deliveryFee = totalPrice < 2000 ? 100 : 0;
+  const finalTotalPrice = totalPrice + deliveryFee;
 
-    const InsertData = async () => {
-      if (!phoneNumber) {
-        setPhoneNumberError(true); // Show error message if phone number is not provided
-        return;
-      }
+  useEffect(() => {
+    const setLocation = async () => {
+      setLocationServicesEnabled(await CheckIfLocationEnabled());
+      const location = await GetCurrentLocation();
+      setDisplayCurrentAddress(location ?? "Location not detected ...");
+      setEditableAddress(location ?? "Location not detected ...");
+    };
+    setLocation();
+  }, []);
+
+  // const InsertData = async () => {
+  //   if (!phoneNumber) {
+  //     setPhoneNumberError(true);
+  //     return;
+  //   }
+  // const {userInfo}= useAuth();
   
-      const userId = 1; // Replace this with the actual User ID of the logged-in user
-      const orderStatus = "Pending"; // Example status
-      const paymentMethod = "Cash on Delivery"; // Example payment method
-      const paymentStatus = "Pending"; // Example payment status
-      const deliveryFee = 0; // Example delivery fee
+  //   const userId = userInfo?.user.email; // Replace this with the actual User ID of the logged-in user
+  //   const orderStatus = "Pending";
+  //   const paymentMethod = "Cash on Delivery";
+  //   const paymentStatus = "Pending";
+  //   console.log(userId);
   
+  //   try {
+  //     // Insert the order into the Order table
+  //     const { data: orderData, error: orderError } = await supabase
+  //       .from('Order')
+  //       .insert({
+  //         Order_date: new Date().toISOString(),
+  //         User_id: userId,
+  //         Order_Status: orderStatus,
+  //         Address: editableAddress,
+  //         Total_Amount: finalTotalPrice, // Total price including delivery fee
+  //         Delivery_Fee: deliveryFee,
+  //         Payment_Method: paymentMethod,
+  //         Payment_Status: paymentStatus,
+  //       })
+  //       .select('Order_id'); // Retrieve the Order_id of the new order
+  
+  //     if (orderError) {
+  //       console.error("Error inserting order: ", orderError.message);
+  //       return;
+  //     }
+  
+  //     const orderId = orderData[0].Order_id;
+  //     console.log("Order placed successfully! Order ID:", orderId);
+  
+  //     // Now insert each cart item into the Order_Item table
+  //     const orderItems = items.map((item) => ({
+  //       Order_id: orderId,
+  //       Product_id: item.id, // Ensure this is the correct bigint `id` from the Product table
+  //       Quantity: item.quantity, // The quantity of the item ordered
+  //     }));
+  
+  //     const { error: orderItemError } = await supabase
+  //       .from('Order_Item')
+  //       .insert(orderItems); // Insert multiple items at once
+  
+  //     if (orderItemError) {
+  //       console.error("Error inserting order items: ", orderItemError.message);
+  //     } else {
+  //       console.log("Order items inserted successfully!");
+  //       // Navigate to confirmation or another relevant screen
+  //     }
+  //   } catch (err) {
+  //     console.error("Error inserting order:", err);
+  //   }
+  // };
+  const [savemail, setSavemail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEmail = async () => {
       try {
-        // Insert the new order and return the generated Order_id
-        const { data, error } = await supabase
-          .from('Order')
-          .insert({
-            Order_date: new Date().toISOString(), // Current timestamp
-            User_id: userId,
-            Order_Status: orderStatus,
-            Address: displayCurrentAddress,
-            Phone_Number: phoneNumber, // Include phone number in order details
-            Total_Amount: totalPrice,
-            Delivery_Fee: deliveryFee,
-            Payment_Method: paymentMethod,
-            Payment_Status: paymentStatus,
-          })
-          .select('Order_id'); // Return the newly inserted Order_id
-  
-        if (error) {
-          console.error("Error inserting order: ", error.message);
+        const storedEmail = await AsyncStorage.getItem("savemail");
+        if (storedEmail) {
+          setSavemail(storedEmail); // Set the email from AsyncStorage
         } else {
-          const orderId = data[0].Order_id; // Extract the Order_id from the returned data
-          console.log("Order placed successfully! Order ID:", orderId);
+          console.error('No email found');
         }
-      } catch (err) {
-        console.error("Error inserting order:", err);
+      } catch (error) {
+        console.error("Error retrieving savemail:", error);
       }
     };
-    
-    
   
-    return (
-      <SafeAreaView>
-         <View className="bg-slate-100 min-h-screen ">
-        <View className="flex-row items-center m-5">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
+    fetchEmail();
+  }, []);
+  
+  const InsertData = async () => {
+    
+    if (!phoneNumber) {
+      setPhoneNumberError(true);
+      return;
+    }
+    console.log(savemail);
+    const userEmail = savemail; // This is the email used to fetch the User_id
+    console.log(userEmail);
+  
+    if (!userEmail) {
+      Alert.alert("Error", "User email not found.");
+      return;
+    }
+  
+    try {
+      // Step 1: Fetch User_id from User table using email
+      const { data: userData, error: userError } = await supabase
+        .from('User')
+        .select('User_id')
+        .eq('Email', userEmail)
+        .single(); // Assumes email is unique
+  
+      if (userError) {
+        throw new Error(`Error fetching user: ${userError.message}`);
+      }
+      console.log(userData?.User_id);
+      const userId = userData?.User_id;
+      if (!userId) {
+        throw new Error("User ID not found.");
+      }
+  
+      // Step 2: Insert the order into the Order table
+      const { data: orderData, error: orderError } = await supabase
+        .from('Order')
+        .insert({
+          Order_date: new Date().toISOString(),
+          User_id: userId,
+          Order_Status: "Pending",
+          Address: editableAddress,
+          Total_Amount: finalTotalPrice,
+          Delivery_Fee: deliveryFee,
+          Payment_Method: "Cash on Delivery",
+          Payment_Status: "Pending",
+        })
+        .select('Order_id');
+  
+      if (orderError) {
+        throw new Error(`Error inserting order: ${orderError.message}`);
+      }
+  
+      const orderId = orderData[0].Order_id;
+  
+      // Step 3: Insert each cart item into the Order_Item table
+      const orderItems = items.map((item) => ({
+        Order_id: orderId,
+        Product_id: item.id,
+        Quantity: item.quantity,
+      }));
+  
+      const { error: orderItemError } = await supabase
+        .from('Order_Item')
+        .insert(orderItems);
+  
+      if (orderItemError) {
+        throw new Error(`Error inserting order items: ${orderItemError.message}`);
+      }
+  
+      console.log("Order placed successfully! Order ID:", orderId);
+      Alert.alert("Order Confirmed.");
+  
+    } catch (err:any) {
+      console.error("Error inserting order:", err);
+      Alert.alert("Order Error", err.message);
+    } 
+  };
+  
+
+
+
+
+  
+  
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', margin: 15 }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
             <AntDesign name="arrowleft" size={24} color="black" />
           </TouchableOpacity>
-
-          <Text className="text-2xl font-JakartaBold">Cart</Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Cart</Text>
         </View>
-  
+
+        <ScrollView 
+          contentContainerStyle={{ paddingBottom: 100 }} // Add padding to make room for the fixed summary view
+          style={{ flex: 1 }}
+        >
           {items.length > 0 ? (
-            <ScrollView className="px-5">
-              <View className="gap-1 mb-3 border-b-2 p-4 border-slate-200 rounded-xl">
-                <Text className="font-JakartaBold text-lg">Deliver To</Text>
-                <View className="flex flex-row items-center space-x-3 flex-1">
-                  <Octicons name="location" size={24} color="#E52850" />
-                  <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
-                    {displayCurrentAddress}
-                  </Text>
-                </View>
+            <View style={{ padding: 15 }}>
+              <View style={{ marginBottom: 15, borderBottomWidth: 2, borderBottomColor: 'lightgray', paddingBottom: 10 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Deliver To</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    padding: 10,
+                    borderRadius: 5,
+                    borderColor: editableAddress !== displayCurrentAddress ? 'blue' : 'gray',
+                    marginTop: 5
+                  }}
+                  placeholder="Enter delivery address"
+                  value={editableAddress}
+                  onChangeText={(value) => setEditableAddress(value)}
+                />
               </View>
-                {/* Phone Number Input Field */}
-                <View className="gap-1 mb-3 border-b-2 p-2 border-slate-200 rounded-xl">
-              <Text className="font-JakartaBold text-lg">Phone Number</Text>
-              <TextInput
-                className={`border p-3 rounded-md ${
-                  phoneNumberError ? "border-red-500" : "border-gray-300"
-                }`} // Red border if there's an error
-                placeholder="Enter phone number"
-                keyboardType="phone-pad"
-                value={phoneNumber}
-                onChangeText={(value) => {
-                  setPhoneNumber(value);
-                  setPhoneNumberError(false); // Clear error when input changes
-                }}
-              />
-              {phoneNumberError && (
-                <Text className="text-red-500 text-sm">
-                  Phone number is required
-                </Text>
-              )}
-            </View>
-  
+
+              <View style={{ marginBottom: 15, borderBottomWidth: 2, borderBottomColor: 'lightgray', paddingBottom: 10 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Phone Number</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    padding: 10,
+                    borderRadius: 5,
+                    borderColor: phoneNumberError ? 'red' : 'gray',
+                    marginTop: 5
+                  }}
+                  placeholder="Enter phone number"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={(value) => {
+                    setPhoneNumber(value);
+                    setPhoneNumberError(false);
+                  }}
+                />
+                {phoneNumberError && (
+                  <Text style={{ color: 'red', fontSize: 12, marginTop: 5 }}>
+                    Phone number is required
+                  </Text>
+                )}
+              </View>
+
+              
+
               {items.map((item) => (
                 <CartItemCard key={item.id} item={item} />
               ))}
-            </ScrollView>
+            </View>
           ) : (
-            <View className="w-full flex justify-center items-center gap-2 mt-5">
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
               <Image
                 source={icons.arrowDown}
-                className="w-24 h-24 opacity-10"
+                style={{ width: 96, height: 96, opacity: 0.1 }}
                 resizeMode="contain"
               />
-              <Text className="text-2xl text-center font-JakartaExtraBold text-gray-300">
-                Your cart is empty !
+              <Text style={{ fontSize: 24, textAlign: 'center', color: 'gray' }}>
+                Your cart is empty!
               </Text>
             </View>
           )}
-  
-          {totalPrice > 0 && (
-            <View className="absolute bottom-0 w-full p-3 mb-3 bg-white rounded-xl flex flex-row justify-between items-center ">
-              <View className="flex flex-row gap-2 items-center">
-                <Text className="text-xl font-JakartaBold">Pay With</Text>
-                <Image
-                  source={images.welcome}
-                  className=" w-[30px] h-[30px]"
-                  resizeMode="contain"
-                />
-              </View>
-  <TouchableOpacity onPress={InsertData}>
-              <View className="flex-row items-center space-x-5 bg-green-700 px-3 py-2 rounded-lg">
-                <View className="flex justify-start">
-                  <Text className="text-xl text-white">
-                    {" ₹ "}
-                    {totalPrice}
-                  </Text>
-                  <Text className="text-xs text-white">Total</Text>
+          {/* Billing Details Section */}
+          {items.length > 0 && (
+          <View style={{ marginBottom: 20, marginHorizontal:20 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Billing Details</Text>
+                {items.map((item) => (
+                  <View key={item.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
+                    <Text style={{ fontSize: 16 }}>{item.name} (x{item.quantity})</Text>
+                    <Text style={{ fontSize: 16 }}>₹{item.price * item.quantity}</Text>
+                  </View>
+                ))}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, borderTopWidth: 1, borderTopColor: 'lightgray', paddingTop: 5 }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Subtotal</Text>
+                  <Text style={{ fontSize: 16 }}>₹{totalPrice}</Text>
                 </View>
-                <View className="flex-row items-center">
-                  <Text className="text-xl text-white">Place Order</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Delivery Fee</Text>
+                  <Text style={{ fontSize: 16 }}>₹{deliveryFee}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, borderTopWidth: 1, borderTopColor: 'lightgray', paddingTop: 5 }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total</Text>
+                  <Text style={{ fontSize: 16 }}>₹{finalTotalPrice}</Text>
+                </View>
+              </View>
+          )}
+        </ScrollView>
+
+        {totalPrice > 0 && (
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 15, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: 'lightgray', borderRadius: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginRight: 10 }}>Pay With</Text>
+              <Image
+                source={images.welcome}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
+            </View>
+            <TouchableOpacity onPress={InsertData}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'green', padding: 10, borderRadius: 5 }}>
+                <Text style={{ fontSize: 18, color: 'white' }}>{" ₹ "}{finalTotalPrice}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, color: 'white' }}>Place Order</Text>
                   <AntDesign name="caretright" size={20} color="white" />
                 </View>
-
               </View>
-          </TouchableOpacity>
-            </View>
-          )}
-        </View>
-  
-      </SafeAreaView>
-    );
-  };
-  
-  export default Cart;
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+};
+
+export default Cart;

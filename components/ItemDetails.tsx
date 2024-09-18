@@ -8,7 +8,6 @@ import { useCart } from "@/providers/CartProvider";
 
 const ItemDetails = ({ item }: { item: Product | undefined }) => {
   const [count, setCount] = useState(1);
-  const [isVisible, setIsVisible] = useState(true); // State to control visibility of the item card
 
 
   const incrementCount = () => {
@@ -25,13 +24,12 @@ const ItemDetails = ({ item }: { item: Product | undefined }) => {
 
   const addToCart = (item: Product, count: number): void => {
     addItem(item, count);
-    setIsVisible(false); // Hide the item card after adding to the cart
 
   };
 
   return (
     <>
-      {item && isVisible &&(
+      {item  &&(
         <View>
           <View className="flex flex-col justify-center items-center">
             <Image

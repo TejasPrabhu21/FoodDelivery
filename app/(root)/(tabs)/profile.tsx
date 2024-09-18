@@ -22,6 +22,7 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const Profile = () => {
+  
   const onSignOutPress = useCallback(async () => {}, []);
   return (
     <SafeAreaView className="flex-1">

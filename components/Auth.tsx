@@ -4,6 +4,7 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { router, useNavigation } from 'expo-router';
 
 const GoogleSignInComponent = () => {
   useEffect(() => {
@@ -12,15 +13,31 @@ const GoogleSignInComponent = () => {
       webClientId: '510373110008-glgrr5b0mp6qaod1kn38rviqe4f9f7p8.apps.googleusercontent.com',
     });
   }, []);
+  const navigation = useNavigation();
 
   const handleGoogleSignIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
 
-   //   const { givenName, familyName } = userInfo.User; 
+      // Check if userInfo.data is defined and userInfo.data.user is non-null
+      if (userInfo?.data?.user) {
+        const { name, photo, id } = userInfo.data.user;
 
-   //   console.log(`Given Name: ${givenName}, Family Name: ${familyName}`);
+        // Use nullish coalescing to handle potentially undefined values
+        const displayName = name ?? 'Unknown Given Name';
+        const displayPhoto = photo ?? 'No Photo Available'; // Or use a placeholder URL
+        const displayId = id ?? 'Unknown ID';
+
+
+
+        console.log(`Given Name: ${displayName}`);
+        console.log(`Photo URL: ${displayPhoto}`);
+        console.log(`ID: ${displayId}`);
+        router.navigate('/(root)/(tabs)/home');
+      } else {
+        console.log('No user data found.');
+      }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('Sign-in was cancelled by the user.');
@@ -42,5 +59,7 @@ const GoogleSignInComponent = () => {
     />
   );
 };
+
+
 
 export default GoogleSignInComponent;

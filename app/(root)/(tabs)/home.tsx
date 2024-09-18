@@ -18,6 +18,11 @@ import { Product } from "@/types/type";
 import ItemDetails from "@/components/ItemDetails";
 import { supabase } from "@/lib/supabase";
 import { Link, useNavigation } from "expo-router";
+import { useAuth } from "@/providers/AuthProvider";
+import CustomButton from "@/components/CustomButton";
+
+
+
 
 const { width } = Dimensions.get("window");
 
@@ -33,7 +38,12 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const menuAnimation = useRef(new Animated.Value(-width * 0.75)).current;
   const navigation = useNavigation(); // Use navigation hook
-
+  
+  useEffect(() => {
+    if (data) {
+      setCounts(data.map(() => 1)); // Initialize counts with 1 for each item
+    }
+  }, [data]);
 
   useEffect(() => {
     const setLocation = async () => {
@@ -99,6 +109,8 @@ const Home = () => {
     item.Product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+const {handleSignOut} = useAuth();
+
   return  (
     <GestureHandlerRootView>
       <SafeAreaView className="flex-1">
@@ -137,7 +149,7 @@ const Home = () => {
           </Link>
 
           {/* Orders */}
-          <Link href="/profile" asChild>
+          <Link href="/(root)/(tabs)/orders" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
               <MaterialIcons name="receipt" size={24} color="#9F5216"  />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Orders</Text>
@@ -160,8 +172,12 @@ const Home = () => {
       bottom: 30,  // Adjust as needed
       left: 20,    // Ensure it's aligned with other buttons
     }}
-  ><AntDesign name="logout" size={24} color="#9F5216" />
-  <Text style={{ fontSize: 18, marginLeft: 10}}>Sign Out</Text>
+  >
+  <TouchableOpacity onPress={handleSignOut} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+  <AntDesign name="logout" size={24} color="#9F5216" />
+  <Text style={{ fontSize: 18, marginLeft: 10 }}>Sign Out</Text>
+</TouchableOpacity>
+
 </TouchableOpacity>
 
 
@@ -180,9 +196,13 @@ const Home = () => {
                 {displayCurrentAddress}
               </Text>
             </View>
+            <Link href="/cart" asChild>
+              <TouchableOpacity style={{ paddingHorizontal: 5, paddingVertical: 10,marginTop:20, borderRadius: 10, backgroundColor: '#E52B50' }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go to Cart</Text>
+              </TouchableOpacity>
+            </Link>
 
           </View>
-
           <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
             <TextInput
               className="flex-1 p-2"
@@ -197,6 +217,7 @@ const Home = () => {
             <Text className="text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
               Explore
             </Text>
+            
 
             {/* Use filtered data to display products */}
             {filteredData && 
@@ -207,8 +228,8 @@ const Home = () => {
         id: item.id,
         name: item.Product_name,
         image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
-        time: "20 - 30",
-        type: "Seafood",
+        time: "",
+        type: item.Product_weight+"g",
         price: item.Product_price,
       }}
       onItemPress={handleItemPress}

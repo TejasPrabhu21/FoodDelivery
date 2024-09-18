@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons, images } from "@/constants";
+import OAuth from "@/components/OAuth";
 
 const Onboarding = () => {
   return (
@@ -24,7 +25,7 @@ const Onboarding = () => {
         />
         <View className=" flex items-center justify-center w-full mt-10">
           <Text className=" text-black text-3xl font-bold mx-10 text-center">
-            Food delivery app
+            Kinara Tasty
           </Text>
         </View>
         {/* <Text className="text-md font-JakartaSemiBold text-center text-[#858585] mx-10 mt-3">
@@ -32,12 +33,11 @@ const Onboarding = () => {
           tenetur.
         </Text> */}
       </View>
+      <View className="mb-12">
+      <OAuth/>
+      </View>
 
-      <CustomButton
-        onPress={() => router.replace("/(auth)/sign-up")}
-        className="w-11/12 mt-10 mb-5 bg-danger-500"
-        title={"Get started "}
-      />
+     
     </SafeAreaView>
   );
 };
