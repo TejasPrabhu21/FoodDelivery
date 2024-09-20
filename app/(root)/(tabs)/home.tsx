@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Octicons, AntDesign, MaterialIcons, Entypo, FontAwesome } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,9 +21,6 @@ import { supabase } from "@/lib/supabase";
 import { Link, useNavigation } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
 import CustomButton from "@/components/CustomButton";
-
-
-
 
 const { width } = Dimensions.get("window");
 
@@ -38,6 +36,7 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const menuAnimation = useRef(new Animated.Value(-width * 0.75)).current;
   const navigation = useNavigation(); // Use navigation hook
+  const [visibleSheet, setVisibleSheet] = useState<boolean>(false);
   
   useEffect(() => {
     if (data) {
@@ -85,8 +84,6 @@ const Home = () => {
     }).start();
   };
 
- 
-
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["25%", "62%"], []);
 
@@ -98,10 +95,13 @@ const Home = () => {
     console.log("handleSheetChanges", index);
   }, []);
 
-  const handleClosePress = () => bottomSheetModalRef.current?.close();
+  const handleCloseSheet = () => {
+    setVisibleSheet(false);
+  };
 
   const handleItemPress = (item: Product) => {
     setSelectedItem(item);
+    setVisibleSheet(true);
     handlePresentModalPress();
   };
 
@@ -109,16 +109,23 @@ const Home = () => {
     item.Product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-const {handleSignOut} = useAuth();
+  const {handleSignOut} = useAuth();
 
-  return  (
+  // Close menu if touch is detected outside
+  const handleTouchOutsideMenu = () => {
+    if (menuVisible) {
+      toggleMenu();
+    }
+  };
+
+  return (
     <GestureHandlerRootView>
       <SafeAreaView className="flex-1">
         {/* Side Menu */}
         <Animated.View
           style={{
             transform: [{ translateX: menuAnimation }],
-            width: width * 0.75,
+            width: width * 0.65,
             position: "absolute",
             left: 0,
             top: 0,
@@ -129,13 +136,13 @@ const {handleSignOut} = useAuth();
           }}
         >
           <TouchableOpacity onPress={toggleMenu} style={{ paddingLeft: 15, paddingTop: 0 }}>
-            <Octicons name="x" size={28} color="#9F5216"  />
+            <Octicons name="x" size={28} color="#ca681c" />
           </TouchableOpacity>
 
           {/* Profile */}
           <Link href="/profile" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
-              <FontAwesome name="user" size={24} color="#9F5216"  />
+              <FontAwesome name="user" size={24} color="#ca681c" />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Profile</Text>
             </TouchableOpacity>
           </Link>
@@ -143,7 +150,7 @@ const {handleSignOut} = useAuth();
           {/* Cart */}
           <Link href="/cart" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
-              <AntDesign name="shoppingcart" size={24} color="#9F5216"  />
+              <AntDesign name="shoppingcart" size={24} color="#ca681c" />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Cart</Text>
             </TouchableOpacity>
           </Link>
@@ -151,7 +158,7 @@ const {handleSignOut} = useAuth();
           {/* Orders */}
           <Link href="/(root)/(tabs)/orders" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
-              <MaterialIcons name="receipt" size={24} color="#9F5216"  />
+              <MaterialIcons name="receipt" size={24} color="#ca681c" />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Orders</Text>
             </TouchableOpacity>
           </Link>
@@ -159,106 +166,104 @@ const {handleSignOut} = useAuth();
           {/* Contact */}
           <Link href="/contact" asChild>
             <TouchableOpacity onPress={toggleMenu} style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
-              <Entypo name="phone" size={24} color="#9F5216"  />
+              <Entypo name="phone" size={24} color="#ca681c" />
               <Text style={{ fontSize: 18, marginLeft: 10 }}>Contact</Text>
             </TouchableOpacity>
           </Link>
-          <TouchableOpacity
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 20,
-      position: "absolute",
-      bottom: 30,  // Adjust as needed
-      left: 20,    // Ensure it's aligned with other buttons
-    }}
-  >
-  <TouchableOpacity onPress={handleSignOut} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
-  <AntDesign name="logout" size={24} color="#9F5216" />
-  <Text style={{ fontSize: 18, marginLeft: 10 }}>Sign Out</Text>
-</TouchableOpacity>
-
-</TouchableOpacity>
-
-
           
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 20,
+              position: "absolute",
+              bottom: 30,  // Adjust as needed
+              left: 20,    // Ensure it's aligned with other buttons
+            }}
+          >
+            <TouchableOpacity onPress={handleSignOut} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+              <AntDesign name="logout" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Sign Out</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Main Content */}
-        <View className="flex-1">
-          <View className="flex flex-row items-center justify-between gap-3 p-3">
-            <TouchableOpacity onPress={toggleMenu}>
-              <Octicons name="three-bars" size={24} color="#9F5216"  />
-            </TouchableOpacity>
-            <View className="flex-1 pl-5">
-              <Text className="font-JakartaBold">Deliver To</Text>
-                <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
-                {displayCurrentAddress}
-              </Text>
-            </View>
-            <Link href="/cart" asChild>
-              <TouchableOpacity style={{ paddingHorizontal: 5, paddingVertical: 10,marginTop:20, borderRadius: 10, backgroundColor: '#E52B50' }}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go to Cart</Text>
+        <TouchableWithoutFeedback onPress={handleTouchOutsideMenu}>
+          <View className="flex-1">
+            <View className="flex flex-row items-center justify-between gap-3 p-3">
+              <TouchableOpacity onPress={toggleMenu}>
+                <Octicons name="three-bars" size={24} color="#9F5216" />
               </TouchableOpacity>
-            </Link>
-
-          </View>
-          <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
-            <TextInput
-              className="flex-1 p-2"
-              placeholder="Search for food, hotels"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <AntDesign name="search1" size={24} color="#E52B50" />
-          </View>
-
-          <ScrollView className="bg-gray-100">
-            <Text className="text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
-              Explore
-            </Text>
-            
-
-            {/* Use filtered data to display products */}
-            {filteredData && 
-  filteredData.map((item) => (
-    <ItemCards
-      key={item.id}
-      item={{
-        id: item.id,
-        name: item.Product_name,
-        image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
-        time: "",
-        type: item.Product_weight+"g",
-        price: item.Product_price,
-      }}
-      onItemPress={handleItemPress}
-    />
-  ))
-}
-
-          </ScrollView>
-        </View>
-
-        <BottomSheetModalProvider>
-          <View className="shadow-xl">
-            <BottomSheetModal
-              ref={bottomSheetModalRef}
-              index={1}
-              snapPoints={snapPoints}
-              onChange={handleSheetChanges}
-              enableDismissOnClose={true}
-              stackBehavior="push"
-            >
-            <BottomSheetView>
-                <TouchableOpacity onPress={handleClosePress} className="w-full flex items-end justify-end px-5 pb-1">
-                  <Octicons name="x" size={28} color={"#6c757d"} />
+              <View className="flex-1 pl-5">
+                <Text className="font-JakartaBold">Deliver To</Text>
+                <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
+                  {displayCurrentAddress}
+                </Text>
+              </View>
+              <Link href="/cart" asChild>
+                <TouchableOpacity style={{ paddingHorizontal: 5, paddingVertical: 10,marginTop:20, borderRadius: 10, backgroundColor: '#E52B50' }}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go to Cart</Text>
                 </TouchableOpacity>
-                {selectedItem && <ItemDetails item={selectedItem} />}
-              </BottomSheetView>
-            </BottomSheetModal>
+              </Link>
+            </View>
+            <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
+              <TextInput
+                className="flex-1 p-2"
+                placeholder="Search for food, hotels"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              <AntDesign name="search1" size={24} color="#E52B50" />
+            </View>
+
+            <ScrollView className="bg-gray-100">
+              <Text className="text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
+                Explore
+              </Text>
+
+              {/* Use filtered data to display products */}
+              {filteredData && 
+                filteredData.map((item) => (
+                  <ItemCards
+                    key={item.id}
+                    item={{
+                      id: item.id,
+                      name: item.Product_name,
+                      image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
+                      time: "",
+                      type: item.Product_weight+"g",
+                      price: item.Product_price,
+                    }}
+                    onItemPress={handleItemPress}
+                  />
+                ))
+              }
+            </ScrollView>
           </View>
-        </BottomSheetModalProvider>
+        </TouchableWithoutFeedback>
+
+        {(visibleSheet &&
+          <BottomSheetModalProvider>
+            <View className="shadow-xl">
+              <BottomSheetModal
+                ref={bottomSheetModalRef}
+                index={1}
+                snapPoints={snapPoints}
+                onChange={handleSheetChanges}
+                enableDismissOnClose={true}
+                stackBehavior="push"
+              >
+                <BottomSheetView>
+                  <TouchableOpacity onPress={handleCloseSheet} className="w-full flex items-end justify-end px-5 pb-1">
+                    <Octicons name="x" size={28} color={"#6c757d"} />
+                  </TouchableOpacity>
+                  {selectedItem && <ItemDetails item={selectedItem} />}
+                </BottomSheetView>
+              </BottomSheetModal>
+            </View>
+          </BottomSheetModalProvider>
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );

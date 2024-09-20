@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 10,
-    backgroundColor: "#28a745", // Bootstrap success color
+    backgroundColor: "#ca681c", // Bootstrap success color
     padding: 12,
     borderRadius: 6,
   },
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: "#28a745",
+    backgroundColor: "#ca681c",
     padding: 12,
     borderRadius: 6,
     alignItems: "center",
