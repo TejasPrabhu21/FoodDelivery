@@ -17,14 +17,14 @@ const Contact = () => {
     <ScrollView contentContainerStyle={styles.container}>
     <View>
     <TouchableOpacity className='mt-2' onPress={() => navigation.goBack()}>
-    <MaterialIcons name="arrow-back" size={28} color="#9F5216" />
+    <MaterialIcons name="arrow-back" size={28} color="#ca681c" />
     <Text style={styles.heading}>Contact Us</Text>
           </TouchableOpacity>
          
         </View>
 
         <View style={styles.contactItem}>
-          <MaterialIcons name="call" size={28} color="#9F5216" />
+          <MaterialIcons name="call" size={28} color="#ca681c" />
           <View style={styles.contactInfo}>
             <Text style={styles.title}>Call us</Text>
             <TouchableOpacity onPress={handleCall}>
@@ -34,7 +34,7 @@ const Contact = () => {
         </View>
 
       <View style={styles.contactItem}>
-        <FontAwesome name="envelope" size={28} color="#9F5216"  />
+        <FontAwesome name="envelope" size={28} color="#ca681c"  />
         <View style={styles.contactInfo}>
           <Text style={styles.title}>Send us a message</Text>
           <TouchableOpacity onPress={handleEmail}>
@@ -44,7 +44,7 @@ const Contact = () => {
       </View>
 
       <View style={styles.contactItem}>
-        <MaterialIcons name="location-on" size={28} color="#9F5216"  />
+        <MaterialIcons name="location-on" size={28} color="#ca681c"  />
         <View style={styles.contactInfo}>
           <Text style={styles.title}>Address</Text>
           <Text style={styles.text}>Canara, Barebail,</Text>
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: "#9F5216" ,
+    color: "#ca681c" ,
     textAlign: 'center',
   },
   contactItem: {

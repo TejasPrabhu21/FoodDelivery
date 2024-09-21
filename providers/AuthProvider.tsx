@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     checkIfSignedIn();
   }, []);
- 
+
   const checkIfSignedIn = async () => {
     try {
       const storedUser = await AsyncStorage.getItem("userInfo");
@@ -43,9 +43,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      
 
-      await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
+      await AsyncStorage.setItem(
+        "userInfo",
+        JSON.stringify(userInfo.data?.user)
+      );
       setUserInfo(userInfo as unknown as User);
       setIsSignedIn(true);
     } catch (error: any) {

@@ -83,7 +83,7 @@ const Home = () => {
       useNativeDriver: true,
     }).start();
   };
-
+  
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["25%", "62%"], []);
 
@@ -193,7 +193,7 @@ const Home = () => {
           <View className="flex-1">
             <View className="flex flex-row items-center justify-between gap-3 p-3">
               <TouchableOpacity onPress={toggleMenu}>
-                <Octicons name="three-bars" size={24} color="#9F5216" />
+                <Octicons name="three-bars" size={24} color="#ca681c" />
               </TouchableOpacity>
               <View className="flex-1 pl-5">
                 <Text className="font-JakartaBold">Deliver To</Text>

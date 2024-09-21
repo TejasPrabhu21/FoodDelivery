@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 10,
-    backgroundColor: "#ca681c", // Bootstrap success color
+    backgroundColor: "#ca681c", // Button color
     padding: 12,
     borderRadius: 6,
   },

@@ -22,7 +22,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {handlePayment} from "../../../PaymentSheet/PaymentScreen"
+import {handlePayment} from "../../../lib/Razorpay"
 
 const Cart = () => {
   const { items, totalPrice } = useCart();
@@ -46,6 +46,8 @@ const Cart = () => {
     setLocation();
   }, []);
 
+  const userInfo = useAuth();
+  console.log(userInfo)
   // const InsertData = async () => {
   //   if (!phoneNumber) {
   //     setPhoneNumberError(true);
@@ -125,13 +127,14 @@ const Cart = () => {
   
   const InsertData = async () => {
     
-    if (!phoneNumber) {
+    if (!phoneNumber || phoneNumber.length !== 10) {
       setPhoneNumberError(true);
       return;
     }
     console.log(savemail);
     const userEmail = savemail; // This is the email used to fetch the User_id
     console.log(userEmail);
+    
   
     if (!userEmail) {
       Alert.alert("Error", "User email not found.");
@@ -142,14 +145,15 @@ const Cart = () => {
       // Step 1: Fetch User_id from User table using email
       const { data: userData, error: userError } = await supabase
         .from('User')
-        .select('User_id')
+        .select('*')
         .eq('Email', userEmail)
         .single(); // Assumes email is unique
   
       if (userError) {
         throw new Error(`Error fetching user: ${userError.message}`);
       }
-      console.log(userData?.User_id);
+      console.log(userData?.User_id,' ',userData?.Name);
+      const userName=userData?.Name
       const userId = userData?.User_id;
       if (!userId) {
         throw new Error("User ID not found.");
@@ -165,7 +169,7 @@ const Cart = () => {
           Address: editableAddress,
           Total_Amount: finalTotalPrice,
           Delivery_Fee: deliveryFee,
-          Payment_Method: "Cash on Delivery",
+          Payment_Method: "online",
           Payment_Status: "Pending",
         })
         .select('Order_id');
@@ -192,8 +196,7 @@ const Cart = () => {
       }
   
       console.log("Order placed successfully! Order ID:", orderId);
-      Alert.alert("Order Confirmed.");
-      handlePayment();
+      handlePayment(orderId,userId);
   
     } catch (err:any) {
       console.error("Error inserting order:", err);
