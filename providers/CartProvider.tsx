@@ -29,17 +29,18 @@ const CartProvider = ({ children }: PropsWithChildren) => {
     }
 
     const newCartItem: CartItem = {
-      id: randomUUID(),
+      id: product.id,
       product,
       quantity,
       price: product.price * quantity,
+      name: product.name,
     };
+
     setItems([newCartItem, ...items]);
     setTotalPrice(() => totalPrice + newCartItem.price);
   };
 
   const updateQuantity = (cartItem: CartItem, amount: number) => {
-    console.log(cartItem.price, amount);
     const updatedItem = items
       .map((item) =>
         item.id !== cartItem.id

@@ -21,7 +21,7 @@ declare interface ButtonProps extends TouchableOpacityProps {
 }
 
 declare interface Product {
-  id: string;
+  id: number;
   name: string;
   image: string;
   time: string;
@@ -30,8 +30,9 @@ declare interface Product {
 }
 
 export interface CartItem {
-  id: string;
+  id: number;
   product: Product;
   quantity: number;
   price: number;
+  name:string;
 }

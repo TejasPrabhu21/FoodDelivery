@@ -6,22 +6,26 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { Product } from "@/types/type";
 import { useCart } from "@/providers/CartProvider";
 
-const ItemDetails = ({ item }: { item: Product | undefined }) => {
+interface ItemDetailsProps {
+  item: Product | undefined;
+}
+
+const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
   const [count, setCount] = useState(1);
 
   const incrementCount = () => {
-    setCount((count) => count + 1);
+    setCount((prev) => prev + 1);
   };
 
   const decrementCount = () => {
     if (count > 1) {
-      setCount((count) => count - 1);
+      setCount((prev) => prev - 1);
     }
   };
 
   const { addItem } = useCart();
 
-  const addToCart = (item: Product, count: number): void => {
+  const addToCart = (item: Product, count: number) => {
     addItem(item, count);
   };
 
@@ -31,28 +35,25 @@ const ItemDetails = ({ item }: { item: Product | undefined }) => {
         <View>
           <View className="flex flex-col justify-center items-center">
             <Image
-              className=" w-11/12 h-56 m-2 rounded-lg"
-              resizeMode="cover"
-              source={{ uri: item?.image }}
+              className="w-56 h-56 m-2 rounded-lg"
+              resizeMode="stretch"
+              source={{ uri: item.image || 'path/to/default/image.jpg' }}
             />
           </View>
           <View className="m-4">
             <View>
-              <Text className="font-JakartaBold text-2xl">{item?.name}</Text>
+              <Text className="font-JakartaBold text-2xl">{item.name}</Text>
               <Text className="font-Jakarta text-gray-600 mt-1">
-                {item?.type}
+                {item.type}
               </Text>
               <Text className="font-JakartaExtraBold text-2xl my-2">
-                {"₹ "}
-                {item.price}
+                {"₹ "}{item.price}
               </Text>
               <Text>
-                <AntDesign name="clockcircleo" size={14} color="black" />
-                {item?.time} mins
               </Text>
             </View>
 
-            <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-10 rounded-xl bg-gray-100">
+            <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-8 rounded-xl bg-gray-100">
               {/* Counter */}
               <Counter
                 count={count}
@@ -64,6 +65,7 @@ const ItemDetails = ({ item }: { item: Product | undefined }) => {
               <TouchableOpacity
                 className="bg-primary-500 p-2 rounded-lg flex flex-row items-center justify-center space-x-4"
                 onPress={() => addToCart(item, count)}
+                accessibilityLabel="Add item to cart"
               >
                 <AntDesign name="shoppingcart" size={24} color="white" />
                 <Text className="text-white font-JakartaBold text-2xl">

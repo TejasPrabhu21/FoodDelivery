@@ -1,0 +1,8 @@
+<resources>
+  <string name="app_name">Food-Delivery-Dev</string>
+  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
+  <string name="server_cilent_id">
+    510373110008-uspr17ud72lct7j9anjfdhjf9du1rfkf.apps.googleusercontent.com</string>
+</resources>

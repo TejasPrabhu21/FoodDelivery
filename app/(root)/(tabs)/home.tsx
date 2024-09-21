@@ -1,11 +1,3 @@
-import {
-  Text,
-  View,
-  ScrollView,
-  TextInput,
-  Button,
-  TouchableOpacity,
-} from "react-native";
 import React, {
   useState,
   useEffect,
@@ -13,10 +5,24 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import { Octicons } from "@expo/vector-icons";
-import { AntDesign } from "@expo/vector-icons";
+import {
+  Text,
+  View,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  TouchableWithoutFeedback,
+} from "react-native";
+import {
+  Octicons,
+  AntDesign,
+  MaterialIcons,
+  Entypo,
+  FontAwesome,
+} from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
@@ -30,16 +36,34 @@ import {
 } from "@/app/lib/location-utils";
 import { Product } from "@/types/type";
 import ItemDetails from "@/components/ItemDetails";
-import CartIcon from "@/components/CartIcon";
+import { supabase } from "@/lib/supabase";
+import { Link, useNavigation } from "expo-router";
+import { useAuth } from "@/providers/AuthProvider";
+import CustomButton from "@/components/CustomButton";
+
+const { width } = Dimensions.get("window");
 
 const Home = () => {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
   const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
     "fetching your location ..."
   );
+  const [data, setData] = useState<any[] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Product | undefined>();
+  const [counts, setCounts] = useState<number[]>([]);
+  const [fetchError, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<number | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const menuAnimation = useRef(new Animated.Value(-width * 0.75)).current;
+  const navigation = useNavigation(); // Use navigation hook
+  const [visibleSheet, setVisibleSheet] = useState<boolean>(false);
 
-  const [data, setData] = useState([]);
-  const [selectedItem, setSelectedItem] = useState<Product>();
+  useEffect(() => {
+    if (data) {
+      setCounts(data.map(() => 1)); // Initialize counts with 1 for each item
+    }
+  }, [data]);
 
   useEffect(() => {
     const setLocation = async () => {
@@ -50,60 +74,31 @@ const Home = () => {
     setLocation();
   }, []);
 
-  const items = [
-    {
-      id: "0",
-      name: "Nandhana Palace",
-      image:
-        "https://b.zmtcdn.com/data/pictures/chains/3/50713/81d0735ce259a6bf800e16bb54cb9e5e.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
-      time: "35 - 45",
-      type: "Andhra",
-      price: 100,
-    },
-    {
-      id: "1",
-      name: "GFC Biriyani",
-      image:
-        "https://b.zmtcdn.com/data/pictures/0/20844770/f9582144619b80d30566f497a02e2c8d.jpg?output-format=webp&fit=around|771.75:416.25&crop=771.75:416.25;*,*",
-      time: "10 - 35",
-      type: "North Indian",
-      price: 150,
-    },
-    {
-      id: "2",
-      name: "Happiness Dhaba",
-      image:
-        "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
-      time: "20 - 25",
-      type: "North Indian",
-      price: 300,
-    },
-
-    {
-      id: "3",
-      name: "Happiness Dhaba",
-      image:
-        "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
-      time: "20 - 25",
-      type: "North Indian",
-      price: 250,
-    },
-    {
-      id: "4",
-      name: "Happiness Dhaba",
-      image:
-        "https://b.zmtcdn.com/data/reviews_photos/2f1/c66cf9c2c68f652db16f2c0a6188a2f1_1659295848.jpg?fit=around%7C200%3A200&crop=200%3A200%3B%2A%2C%2A",
-      time: "20 - 25",
-      type: "North Indian",
-      price: 200,
-    },
-  ];
-
   useEffect(() => {
-    async function fetchData() {
-      fetchData();
-    }
+    const fetchData = async () => {
+      try {
+        const { data, error, status } = await supabase
+          .from("Product")
+          .select("*");
+        if (error) throw error;
+        setData(data ?? []);
+        setStatus(status);
+      } catch (error: any) {
+        setError(error.message);
+      }
+    };
+
+    fetchData();
   }, []);
+
+  const toggleMenu = () => {
+    setMenuVisible(!menuVisible);
+    Animated.timing(menuAnimation, {
+      toValue: menuVisible ? -width * 0.75 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["25%", "62%"], []);
@@ -116,87 +111,225 @@ const Home = () => {
     console.log("handleSheetChanges", index);
   }, []);
 
-  const handleClosePress = () => bottomSheetModalRef.current?.close();
+  const handleCloseSheet = () => {
+    setVisibleSheet(false);
+  };
 
-  // Function to open the sheet with the selected item
   const handleItemPress = (item: Product) => {
     setSelectedItem(item);
+    setVisibleSheet(true);
     handlePresentModalPress();
+  };
+
+  const filteredData = data?.filter((item) =>
+    item.Product_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const { handleSignOut } = useAuth();
+
+  // Close menu if touch is detected outside
+  const handleTouchOutsideMenu = () => {
+    if (menuVisible) {
+      toggleMenu();
+    }
   };
 
   return (
     <GestureHandlerRootView>
-      {/* <CartIcon /> */}
       <SafeAreaView className="flex-1">
-        <View className="flex-1">
-          <View className="flex flex-row items-center justify-between gap-3 p-3">
-            <Octicons name="location" size={24} color="#E52850" />
-            <View className="flex-1">
-              <Text className="font-JakartaBold">Deliver To</Text>
-              <Text
-                ellipsizeMode="tail"
-                numberOfLines={2}
-                className="text-gray-500 mt-1 line-clamp-2"
-              >
-                {displayCurrentAddress}
-              </Text>
-            </View>
-            <Link href={"/(root)/cart"}>
-              <View className="flex items-center justify-center border-2 border-gray-300 rounded-full h-12 w-12 ">
-                <AntDesign name="shoppingcart" size={24} color={"black"} />
-              </View>
-            </Link>
-            <Link href={"/(root)/profile"}>
-              <View className="flex items-center justify-center bg-primary-300  rounded-full h-12 w-12">
-                <Text>T</Text>
-              </View>
-            </Link>
-          </View>
+        {/* Side Menu */}
+        <Animated.View
+          style={{
+            transform: [{ translateX: menuAnimation }],
+            width: width * 0.65,
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            backgroundColor: "#fff",
+            zIndex: 1000,
+            paddingTop: 50,
+          }}
+        >
+          <TouchableOpacity
+            onPress={toggleMenu}
+            style={{ paddingLeft: 15, paddingTop: 0 }}
+          >
+            <Octicons name="x" size={28} color="#ca681c" />
+          </TouchableOpacity>
 
-          <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
-            <TextInput
-              className=" flex-1 p-2"
-              placeholder="Search for food, hotels"
-            />
-            <AntDesign name="search1" size={24} color="#E52B50" />
-          </View>
-
-          <ScrollView className="bg-gray-100">
-            <Text className=" text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
-              Explore
-            </Text>
-            {items.map((item, index) => (
-              <ItemCards
-                key={index}
-                item={item}
-                onItemPress={handleItemPress}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        <BottomSheetModalProvider>
-          <View className="shadow-xl z-50">
-            <BottomSheetModal
-              ref={bottomSheetModalRef}
-              index={1}
-              snapPoints={snapPoints}
-              onChange={handleSheetChanges}
-              enableDismissOnClose={true}
-              stackBehavior="push"
+          {/* Profile */}
+          <Link href="/profile" asChild>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 20,
+              }}
             >
-              <BottomSheetView>
+              <FontAwesome name="user" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Profile</Text>
+            </TouchableOpacity>
+          </Link>
+
+          {/* Cart */}
+          <Link href="/cart" asChild>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <AntDesign name="shoppingcart" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Cart</Text>
+            </TouchableOpacity>
+          </Link>
+
+          {/* Orders */}
+          <Link href="/orders" asChild>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <MaterialIcons name="receipt" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Orders</Text>
+            </TouchableOpacity>
+          </Link>
+
+          {/* Contact */}
+          <Link href="/contact" asChild>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Entypo name="phone" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Contact</Text>
+            </TouchableOpacity>
+          </Link>
+
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 20,
+              position: "absolute",
+              bottom: 30, // Adjust as needed
+              left: 20, // Ensure it's aligned with other buttons
+            }}
+          >
+            <TouchableOpacity
+              onPress={handleSignOut}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginLeft: 10,
+              }}
+            >
+              <AntDesign name="logout" size={24} color="#ca681c" />
+              <Text style={{ fontSize: 18, marginLeft: 10 }}>Sign Out</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Main Content */}
+        <TouchableWithoutFeedback onPress={handleTouchOutsideMenu}>
+          <View className="flex-1">
+            <View className="flex flex-row items-center justify-between gap-3 p-3">
+              <TouchableOpacity onPress={toggleMenu}>
+                <Octicons name="three-bars" size={24} color="#9F5216" />
+              </TouchableOpacity>
+              <View className="flex-1 pl-5">
+                <Text className="font-JakartaBold">Deliver To</Text>
+                <Text ellipsizeMode="tail" className="text-gray-500 mt-1">
+                  {displayCurrentAddress}
+                </Text>
+              </View>
+              <Link href="/cart" asChild>
                 <TouchableOpacity
-                  onPress={handleClosePress}
-                  className="w-full flex items-end justify-end px-5 pb-1"
+                  style={{
+                    paddingHorizontal: 5,
+                    paddingVertical: 10,
+                    marginTop: 20,
+                    borderRadius: 10,
+                    backgroundColor: "#E52B50",
+                  }}
                 >
-                  <Octicons name="x" size={28} color={"#6c757d"} />
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    Go to Cart
+                  </Text>
                 </TouchableOpacity>
-                <ItemDetails item={selectedItem} />
-              </BottomSheetView>
-            </BottomSheetModal>
+              </Link>
+            </View>
+            <View className="flex flex-row items-center justify-between border border-primary-400 rounded-lg px-2 my-1 mx-3">
+              <TextInput
+                className="flex-1 p-2"
+                placeholder="Search for food, hotels"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              <AntDesign name="search1" size={24} color="#E52B50" />
+            </View>
+
+            <ScrollView className="bg-gray-100">
+              <Text className="text-left mx-3 font-Jakarta my-2 text-lg text-gray-600 tracking-widest">
+                Explore
+              </Text>
+
+              {/* Use filtered data to display products */}
+              {filteredData &&
+                filteredData.map((item) => (
+                  <ItemCards
+                    key={item.id}
+                    item={{
+                      id: item.id,
+                      name: item.Product_name,
+                      image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
+                      time: "",
+                      type: item.Product_weight + "g",
+                      price: item.Product_price,
+                    }}
+                    onItemPress={handleItemPress}
+                  />
+                ))}
+            </ScrollView>
           </View>
-        </BottomSheetModalProvider>
+        </TouchableWithoutFeedback>
+
+        {visibleSheet && (
+          <BottomSheetModalProvider>
+            <View className="shadow-xl">
+              <BottomSheetModal
+                ref={bottomSheetModalRef}
+                index={1}
+                snapPoints={snapPoints}
+                onChange={handleSheetChanges}
+                enableDismissOnClose={true}
+                stackBehavior="push"
+              >
+                <BottomSheetView>
+                  <TouchableOpacity
+                    onPress={handleCloseSheet}
+                    className="w-full flex items-end justify-end px-5 pb-1"
+                  >
+                    <Octicons name="x" size={28} color={"#6c757d"} />
+                  </TouchableOpacity>
+                  {selectedItem && <ItemDetails item={selectedItem} />}
+                </BottomSheetView>
+              </BottomSheetModal>
+            </View>
+          </BottomSheetModalProvider>
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );

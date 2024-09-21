@@ -21,11 +21,11 @@ const CartItemCard = ({ item }: { item: CartItem }) => {
   return (
     <View
       key={item.id}
-      className="flex flex-row bg-white rounded-xl p-3 w-full my-2"
+      className="flex flex-row bg-white rounded-xl p-3 w-full my-2 border border-slate-100"
     >
       <Image
-        className=" w-20 h-20 rounded-lg"
-        resizeMode="cover"
+        className=" w-24 h-20 rounded-lg"
+        resizeMode="contain"
         source={{ uri: item?.product.image }}
       />
 

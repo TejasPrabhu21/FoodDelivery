@@ -17,14 +17,14 @@ const Counter = ({
         className="bg-green-200 p-1 rounded-xl"
         onPress={() => decrement()}
       >
-        <AntDesign name="minus" size={28} color="gray" />
+        <AntDesign name="minus" size={24} color="gray" />
       </Pressable>
       <Text className="text-2xl px-1">{count}</Text>
       <Pressable
         className="bg-green-200 p-1 rounded-xl"
         onPress={() => increment()}
       >
-        <AntDesign name="plus" size={28} color="gray" />
+        <AntDesign name="plus" size={24} color="gray" />
       </Pressable>
     </View>
   );
