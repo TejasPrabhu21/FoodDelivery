@@ -34,5 +34,14 @@ export interface CartItem {
   product: Product;
   quantity: number;
   price: number;
-  name:string;
+  name: string;
+}
+
+interface UserInfo {
+  email: string;
+  familyName: string;
+  givenName: string;
+  id: string;
+  name: string;
+  photo: string;
 }

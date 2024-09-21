@@ -22,8 +22,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { handlePayment } from "@/lib/razorpay";
 
 const Cart = () => {
+  const { userInfo } = useAuth();
+  // console.log(userInfo);
   const { items, totalPrice } = useCart();
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
   const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
@@ -72,7 +75,7 @@ const Cart = () => {
       return;
     }
     console.log(savemail);
-    const userEmail = savemail; // This is the email used to fetch the User_id
+    const userEmail = savemail;
     console.log(userEmail);
 
     if (!userEmail) {
@@ -81,12 +84,13 @@ const Cart = () => {
     }
 
     try {
-      // Step 1: Fetch User_id from User table using email
       const { data: userData, error: userError } = await supabase
         .from("User")
         .select("User_id")
         .eq("Email", userEmail)
         .single();
+
+      console.log(userData);
 
       if (userError) {
         throw new Error(`Error fetching user: ${userError.message}`);
@@ -96,7 +100,6 @@ const Cart = () => {
         throw new Error("User ID not found.");
       }
 
-      // Step 2: Insert the order into the Order table
       const { data: orderData, error: orderError } = await supabase
         .from("Order")
         .insert({
@@ -135,6 +138,7 @@ const Cart = () => {
 
       console.log("Order placed successfully! Order ID:", orderId);
       Alert.alert("Order Confirmed.");
+      handlePayment(userInfo);
     } catch (err: any) {
       console.error("Error inserting order:", err);
       Alert.alert("Order Error", err.message);

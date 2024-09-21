@@ -7,9 +7,10 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { Alert } from "react-native";
 import { router } from "expo-router";
+import { UserInfo } from "@/types/type";
 
 interface AuthContextType {
-  userInfo: User | null;
+  userInfo: UserInfo | null;
   isSignedIn: boolean;
   handleGoogleSignIn: () => Promise<void>;
   handleSignOut: () => Promise<void>;
@@ -20,7 +21,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [userInfo, setUserInfo] = useState<User | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const storedUser = await AsyncStorage.getItem("userInfo");
       if (storedUser) {
-        setUserInfo(JSON.parse(storedUser) as User);
+        setUserInfo(JSON.parse(storedUser) as UserInfo);
         setIsSignedIn(true);
       }
     } catch (error) {
@@ -44,8 +45,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
 
-      await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
-      setUserInfo(userInfo as unknown as User);
+      await AsyncStorage.setItem(
+        "userInfo",
+        JSON.stringify(userInfo.data?.user)
+      );
+      setUserInfo(userInfo as unknown as UserInfo);
       setIsSignedIn(true);
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
