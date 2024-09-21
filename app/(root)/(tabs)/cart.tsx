@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {handlePayment} from "../../../PaymentSheet/PaymentScreen"
 
 const Cart = () => {
   const { items, totalPrice } = useCart();
@@ -192,6 +193,7 @@ const Cart = () => {
   
       console.log("Order placed successfully! Order ID:", orderId);
       Alert.alert("Order Confirmed.");
+      handlePayment();
   
     } catch (err:any) {
       console.error("Error inserting order:", err);
