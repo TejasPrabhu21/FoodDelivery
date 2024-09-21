@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import { View, Text,Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Modal } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { icons } from "@/constants";
+import { images } from "@/constants";
 
 interface Order {
   Order_id: number;
@@ -193,9 +196,13 @@ const Orders = () => {
           <AntDesign name="arrowleft" size={24} color="black" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
-        <View style={styles.noOrdersContainer}>
-          <Text style={styles.noOrdersText}>No orders have been made yet.</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+             <Image source={images.noResult} style={{ width: 150, height: 150, marginBottom: 20 }} />
+             <Text style={{ fontSize: 24, textAlign: 'center', color: 'gray' }}>
+                      No orders have been made yet.
+             </Text>
         </View>
+
       </SafeAreaView>
     );
   }
