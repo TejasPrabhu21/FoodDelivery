@@ -22,17 +22,18 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {handlePayment} from "../../../lib/Razorpay"
+import { handlePayment } from "../../../lib/Razorpay";
 
 const Cart = () => {
   const { items, totalPrice } = useCart();
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
-  const [displayCurrentAddress, setDisplayCurrentAddress] = useState("Fetching your location ...");
+  const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
+    "Fetching your location ..."
+  );
   const [editableAddress, setEditableAddress] = useState(displayCurrentAddress);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState(false);
 
-  // Calculate delivery fee based on total price
   const deliveryFee = totalPrice < 2000 ? 100 : 0;
   const finalTotalPrice = totalPrice + deliveryFee;
 
@@ -46,213 +47,151 @@ const Cart = () => {
     setLocation();
   }, []);
 
-  const userInfo = useAuth();
-  console.log(userInfo)
-  // const InsertData = async () => {
-  //   if (!phoneNumber) {
-  //     setPhoneNumberError(true);
-  //     return;
-  //   }
-  // const {userInfo}= useAuth();
-  
-  //   const userId = userInfo?.user.email; // Replace this with the actual User ID of the logged-in user
-  //   const orderStatus = "Pending";
-  //   const paymentMethod = "Cash on Delivery";
-  //   const paymentStatus = "Pending";
-  //   console.log(userId);
-  
-  //   try {
-  //     // Insert the order into the Order table
-  //     const { data: orderData, error: orderError } = await supabase
-  //       .from('Order')
-  //       .insert({
-  //         Order_date: new Date().toISOString(),
-  //         User_id: userId,
-  //         Order_Status: orderStatus,
-  //         Address: editableAddress,
-  //         Total_Amount: finalTotalPrice, // Total price including delivery fee
-  //         Delivery_Fee: deliveryFee,
-  //         Payment_Method: paymentMethod,
-  //         Payment_Status: paymentStatus,
-  //       })
-  //       .select('Order_id'); // Retrieve the Order_id of the new order
-  
-  //     if (orderError) {
-  //       console.error("Error inserting order: ", orderError.message);
-  //       return;
-  //     }
-  
-  //     const orderId = orderData[0].Order_id;
-  //     console.log("Order placed successfully! Order ID:", orderId);
-  
-  //     // Now insert each cart item into the Order_Item table
-  //     const orderItems = items.map((item) => ({
-  //       Order_id: orderId,
-  //       Product_id: item.id, // Ensure this is the correct bigint `id` from the Product table
-  //       Quantity: item.quantity, // The quantity of the item ordered
-  //     }));
-  
-  //     const { error: orderItemError } = await supabase
-  //       .from('Order_Item')
-  //       .insert(orderItems); // Insert multiple items at once
-  
-  //     if (orderItemError) {
-  //       console.error("Error inserting order items: ", orderItemError.message);
-  //     } else {
-  //       console.log("Order items inserted successfully!");
-  //       // Navigate to confirmation or another relevant screen
-  //     }
-  //   } catch (err) {
-  //     console.error("Error inserting order:", err);
-  //   }
-  // };
   const [savemail, setSavemail] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchEmail = async () => {
       try {
         const storedEmail = await AsyncStorage.getItem("savemail");
         if (storedEmail) {
-          setSavemail(storedEmail); // Set the email from AsyncStorage
+          setSavemail(storedEmail);
+          console.log(storedEmail);
+
+          // fetch phone number of the user through email from User table 
+          const { data: userData, error: userError } = await supabase
+          .from("User")
+          .select("Phone")
+          .eq("Email", storedEmail)
+          .single();
+
+        if (userError) {
+          console.error("Error fetching user phone number:", userError.message);
+        } else if (userData) {
+          setPhone(userData.Phone);
+          setPhoneNumber(userData.Phone||''); // Set the phone number in the input field
+        }
+
+
         } else {
-          console.error('No email found');
+          console.error("No email found");
         }
       } catch (error) {
         console.error("Error retrieving savemail:", error);
       }
     };
-  
+
     fetchEmail();
   }, []);
-  
+
   const InsertData = async () => {
-    
     if (!phoneNumber || phoneNumber.length !== 10) {
       setPhoneNumberError(true);
       return;
     }
     console.log(savemail);
-    const userEmail = savemail; // This is the email used to fetch the User_id
-    console.log(userEmail);
-    
-  
+    const userEmail = savemail;
+
     if (!userEmail) {
       Alert.alert("Error", "User email not found.");
       return;
     }
-  
+
     try {
-      // Step 1: Fetch User_id from User table using email
       const { data: userData, error: userError } = await supabase
-        .from('User')
-        .select('*')
-        .eq('Email', userEmail)
-        .single(); // Assumes email is unique
-  
+        .from("User")
+        .select("*")
+        .eq("Email", userEmail)
+        .single();
+
       if (userError) {
         throw new Error(`Error fetching user: ${userError.message}`);
       }
-      console.log(userData?.User_id,' ',userData?.Name);
-      const userName=userData?.Name
       const userId = userData?.User_id;
+
       if (!userId) {
         throw new Error("User ID not found.");
       }
-  
-      // Step 2: Insert the order into the Order table
+
       const { data: orderData, error: orderError } = await supabase
-        .from('Order')
+        .from("Order")
         .insert({
           Order_date: new Date().toISOString(),
           User_id: userId,
           Order_Status: "Pending",
           Address: editableAddress,
-          Total_Amount: finalTotalPrice,
+          Total_Amount: totalPrice,
           Delivery_Fee: deliveryFee,
           Payment_Method: "online",
           Payment_Status: "Pending",
         })
-        .select('Order_id');
-  
+        .select("Order_id");
+
       if (orderError) {
         throw new Error(`Error inserting order: ${orderError.message}`);
       }
-  
+
       const orderId = orderData[0].Order_id;
-  
-      // Step 3: Insert each cart item into the Order_Item table
+
       const orderItems = items.map((item) => ({
         Order_id: orderId,
         Product_id: item.id,
         Quantity: item.quantity,
       }));
-  
+
       const { error: orderItemError } = await supabase
-        .from('Order_Item')
+        .from("Order_Item")
         .insert(orderItems);
-  
+
       if (orderItemError) {
         throw new Error(`Error inserting order items: ${orderItemError.message}`);
       }
-  
+
       console.log("Order placed successfully! Order ID:", orderId);
-      handlePayment(orderId,userId);
-  
-    } catch (err:any) {
+      handlePayment(orderId, userId, finalTotalPrice);
+    } catch (err: any) {
       console.error("Error inserting order:", err);
       Alert.alert("Order Error", err.message);
-    } 
+    }
   };
-  
-
-
-
-
-  
-  
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', margin: 15 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1">
+        <View className="flex-row items-center m-4">
+          <TouchableOpacity onPress={() => router.back()} className="mr-2">
             <AntDesign name="arrowleft" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Cart</Text>
+          <Text className="text-xl font-bold">Cart</Text>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={{ paddingBottom: 100 }} // Add padding to make room for the fixed summary view
-          style={{ flex: 1 }}
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 100 }}
+          className="flex-1"
         >
           {items.length > 0 ? (
-            <View style={{ padding: 15 }}>
-              <View style={{ marginBottom: 15, borderBottomWidth: 2, borderBottomColor: 'lightgray', paddingBottom: 10 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Deliver To</Text>
+            <View className="p-4">
+              <View className="mb-4 border-b-2 border-gray-200 pb-2">
+                <Text className="text-lg font-bold">Deliver To</Text>
                 <TextInput
-                  style={{
-                    borderWidth: 1,
-                    padding: 10,
-                    borderRadius: 5,
-                    borderColor: editableAddress !== displayCurrentAddress ? 'blue' : 'gray',
-                    marginTop: 5
-                  }}
+                  className={`border p-2 rounded-md mt-2 ${
+                    editableAddress !== displayCurrentAddress
+                      ? "border-blue-500"
+                      : "border-gray-400"
+                  }`}
                   placeholder="Enter delivery address"
                   value={editableAddress}
                   onChangeText={(value) => setEditableAddress(value)}
                 />
               </View>
 
-              <View style={{ marginBottom: 15, borderBottomWidth: 2, borderBottomColor: 'lightgray', paddingBottom: 10 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Phone Number</Text>
+              <View className="mb-4 border-b-2 border-gray-200 pb-2">
+                <Text className="text-lg font-bold">Phone Number</Text>
                 <TextInput
-                  style={{
-                    borderWidth: 1,
-                    padding: 10,
-                    borderRadius: 5,
-                    borderColor: phoneNumberError ? 'red' : 'gray',
-                    marginTop: 5
-                  }}
+                  className={`border p-2 rounded-md mt-2 ${
+                    phoneNumberError ? "border-red-500" : "border-gray-400"
+                  }`}
                   placeholder="Enter phone number"
                   keyboardType="phone-pad"
                   value={phoneNumber}
@@ -262,72 +201,75 @@ const Cart = () => {
                   }}
                 />
                 {phoneNumberError && (
-                  <Text style={{ color: 'red', fontSize: 12, marginTop: 5 }}>
+                  <Text className="text-red-500 text-xs mt-1">
                     Phone number is required
                   </Text>
                 )}
               </View>
-
-              
 
               {items.map((item) => (
                 <CartItemCard key={item.id} item={item} />
               ))}
             </View>
           ) : (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+            <View className="flex-1 justify-center items-center mt-5">
               <Image
                 source={icons.arrowDown}
-                style={{ width: 96, height: 96, opacity: 0.1 }}
+                className="w-24 h-24 opacity-10"
                 resizeMode="contain"
               />
-              <Text style={{ fontSize: 24, textAlign: 'center', color: 'gray' }}>
+              <Text className="text-xl text-center text-gray-500">
                 Your cart is empty!
               </Text>
             </View>
           )}
-          {/* Billing Details Section */}
+
           {items.length > 0 && (
-          <View style={{ marginBottom: 20, marginHorizontal:20 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Billing Details</Text>
-                {items.map((item) => (
-                  <View key={item.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
-                    <Text style={{ fontSize: 16 }}>{item.name} (x{item.quantity})</Text>
-                    <Text style={{ fontSize: 16 }}>₹{item.price * item.quantity}</Text>
-                  </View>
-                ))}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, borderTopWidth: 1, borderTopColor: 'lightgray', paddingTop: 5 }}>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Subtotal</Text>
-                  <Text style={{ fontSize: 16 }}>₹{totalPrice}</Text>
+            <View className="mb-5 mx-5">
+              <Text className="text-lg font-bold">Billing Details</Text>
+              {items.map((item) => (
+                <View
+                  key={item.id}
+                  className="flex-row justify-between my-1"
+                >
+                  <Text className="text-base">
+                    {item.name} (x{item.quantity})
+                  </Text>
+                  <Text className="text-base">₹{item.price}</Text>
                 </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Delivery Fee</Text>
-                  <Text style={{ fontSize: 16 }}>₹{deliveryFee}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, borderTopWidth: 1, borderTopColor: 'lightgray', paddingTop: 5 }}>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total</Text>
-                  <Text style={{ fontSize: 16 }}>₹{finalTotalPrice}</Text>
-                </View>
+              ))}
+              <View className="flex-row justify-between my-1 border-t border-gray-200 pt-2">
+                <Text className="text-base font-bold">Subtotal</Text>
+                <Text className="text-base">₹{totalPrice}</Text>
               </View>
+              <View className="flex-row justify-between my-1">
+                <Text className="text-base font-bold">Delivery Fee</Text>
+                <Text className="text-base">₹{deliveryFee}</Text>
+              </View>
+              <View className="flex-row justify-between my-1 border-t border-gray-200 pt-2">
+                <Text className="text-base font-bold">Total</Text>
+                <Text className="text-base">₹{finalTotalPrice}</Text>
+              </View>
+            </View>
           )}
         </ScrollView>
 
         {totalPrice > 0 && (
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 15, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: 'lightgray', borderRadius: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', marginRight: 10 }}>Pay With</Text>
+          <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 rounded-t-lg">
+            <View className="flex-row items-center mb-3">
+              <Text className="text-lg font-bold mr-2">Pay With</Text>
               <Image
                 source={images.welcome}
-                style={{ width: 30, height: 30 }}
+                className="w-7 h-7"
                 resizeMode="contain"
               />
             </View>
             <TouchableOpacity onPress={InsertData}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'green', padding: 10, borderRadius: 5 }}>
-                <Text style={{ fontSize: 18, color: 'white' }}>{" ₹ "}{finalTotalPrice}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 18, color: 'white' }}>Place Order</Text>
-                  <AntDesign name="caretright" size={20} color="white" />
+              <View className="flex-row items-center justify-between bg-green-600 p-3 rounded-md">
+                <Text className="text-lg text-white">{" ₹ "}{finalTotalPrice}</Text>
+                <View className="flex-row items-center">
+                  <Text className="text-lg text-white">Place Order</Text>
+                  <AntDesign name="right" size={24} color="white" />
                 </View>
               </View>
             </TouchableOpacity>

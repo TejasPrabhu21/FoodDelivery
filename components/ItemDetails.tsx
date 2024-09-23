@@ -53,7 +53,7 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
               </Text>
             </View>
 
-            <View className="flex flex-row items-center justify-between mt-3 pt-2 px-3 pb-8 rounded-xl bg-gray-100">
+            <View className="flex flex-row items-center justify-between mt-3 pt-3 px-3 pb-4 rounded-xl bg-gray-100">
               {/* Counter */}
               <Counter
                 count={count}

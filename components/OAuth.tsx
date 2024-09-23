@@ -81,10 +81,11 @@ const OAuth = () => {
           Alert.alert("Error", "Failed to insert user data into the database.");
           return;
         } else {
-          console.log('User inserted:', data);
+          console.log('User inserted:', userToInsert);
         }
       }
       const savemail = result.data?.user.email || '';  // Default to an empty string if undefined
+      console.log("OAuth",savemail);
       await AsyncStorage.setItem('savemail', savemail);
 await AsyncStorage.setItem('userInfo', JSON.stringify(userData));  // Save user data
 

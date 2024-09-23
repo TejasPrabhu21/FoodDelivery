@@ -16,7 +16,7 @@ const ItemCards = ({ item, onItemPress }: ItemCardProps) => {
       <Pressable
         key={item.id}
         onPress={() => onItemPress(item)}
-        className="flex flex-row bg-white m-2 rounded-lg"
+        className="flex flex-row bg-white m-2 rounded-lg shadow-md"
       >
         <View>
           <Image

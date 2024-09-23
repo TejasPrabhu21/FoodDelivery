@@ -146,7 +146,7 @@ const Orders = () => {
       case "Pending":
         return "#ff6347"; // Tomato
       case "delivered":
-        return "#32cd32"; // LimeGreen
+        return "#fff"; // LimeGreen
       default:
         return "#d3d3d3"; // LightGray
     }
@@ -154,7 +154,7 @@ const Orders = () => {
 
   // Render each order in the list
   const renderOrderItem = ({ item }: { item: Order }) => (
-    <View style={[styles.orderItem, { borderColor: getOrderBorderColor(item.Order_Status) }]}>
+    <View className="shadow-sm"style={[styles.orderItem, { borderColor: getOrderBorderColor(item.Order_Status) }]}>
       <Text style={styles.orderId}>Order ID: {item.Order_id}</Text>
       <Text style={styles.orderDetail}>Date: {new Date(item.Order_date).toLocaleDateString()}</Text>
       <Text style={styles.orderDetail}>Status: {item.Order_Status}</Text>
@@ -197,7 +197,7 @@ const Orders = () => {
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-             <Image source={images.noResult} style={{ width: 150, height: 150, marginBottom: 20 }} />
+             <Image source={icons.empty} style={{ width: 150, height: 150, marginBottom: 20 }} />
              <Text style={{ fontSize: 24, textAlign: 'center', color: 'gray' }}>
                       No orders have been made yet.
              </Text>
@@ -333,6 +333,8 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 15,
     paddingBottom: 20,
+   shadowColor:"green",
+  
   },
   modalOverlay: {
     flex: 1,

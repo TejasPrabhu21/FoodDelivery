@@ -55,6 +55,7 @@ const CartProvider = ({ children }: PropsWithChildren) => {
       .filter((item) => item.quantity > 0);
     setItems(updatedItem);
     setTotalPrice(() => totalPrice + cartItem.product.price * amount);
+    console.log("Amount",amount);
   };
 
   return (
