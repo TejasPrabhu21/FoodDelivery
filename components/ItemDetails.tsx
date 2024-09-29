@@ -1,6 +1,6 @@
 import { AntDesign } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { View, Pressable, Image, Text } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Image, Text, Animated } from "react-native";
 import Counter from "./Counter";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Product } from "@/types/type";
@@ -12,6 +12,8 @@ interface ItemDetailsProps {
 
 const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
   const [count, setCount] = useState(1);
+  const [showMessage, setShowMessage] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity 0
 
   const incrementCount = () => {
     setCount((prev) => prev + 1);
@@ -27,6 +29,23 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
 
   const addToCart = (item: Product, count: number) => {
     addItem(item, count);
+    setShowMessage(true); // Show the message
+
+    // Trigger the fade-in effect
+    Animated.timing(fadeAnim, {
+      toValue: 1, // Fully visible
+      duration: 500, // Duration of fade-in
+      useNativeDriver: true,
+    }).start(() => {
+      // After 3 seconds, start fading out
+      setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0, // Fully invisible
+          duration: 800, // Duration of fade-out
+          useNativeDriver: true,
+        }).start(() => setShowMessage(false));
+      }, 900);
+    });
   };
 
   return (
@@ -48,8 +67,6 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
               </Text>
               <Text className="font-JakartaExtraBold text-2xl my-2">
                 {"₹ "}{item.price}
-              </Text>
-              <Text>
               </Text>
             </View>
 
@@ -73,6 +90,27 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Temporary message */}
+            {showMessage && (
+              <Animated.View
+                style={{
+                  opacity: fadeAnim, // Bind opacity to animated value
+                  position: 'absolute',
+                  bottom: 80, // Position above "Add to Cart"
+                  left: 20,
+                  right: 20,
+                  backgroundColor: 'rgba(0, 128, 0, 0.8)', // Transparent green
+                  padding: 10,
+                  borderRadius: 10,
+                  zIndex: 1,
+                }}
+              >
+                <Text className="text-white text-center font-JakartaBold">
+                  Item added to cart!
+                </Text>
+              </Animated.View>
+            )}
           </View>
         </View>
       )}

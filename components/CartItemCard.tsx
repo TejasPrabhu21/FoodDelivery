@@ -24,7 +24,7 @@ const CartItemCard = ({ item }: { item: CartItem }) => {
       className="flex flex-row bg-white rounded-xl p-3 w-full my-2"
     >
       <Image
-        className=" w-24 h-20 rounded-lg"
+        className=" w-24 h-24 rounded-lg"
         resizeMode="contain"
         source={{ uri: item?.product.image }}
       />

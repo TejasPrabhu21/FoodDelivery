@@ -5,11 +5,9 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Animated,
   Dimensions,
-  TouchableWithoutFeedback,
 } from "react-native";
-import { Octicons, AntDesign, MaterialIcons, Entypo, FontAwesome } from "@expo/vector-icons";
+import { Octicons, AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -20,8 +18,17 @@ import ItemDetails from "@/components/ItemDetails";
 import { supabase } from "@/lib/supabase";
 import { Link, useNavigation } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import Profile from "./profile";
+import Cart from "./cart";
+import Orders from "./orders";
+import Contact from "./contact";
+import CustomDrawerContent from "@/components/CustomDrawer";
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 const { width } = Dimensions.get("window");
+
+type HomeScreenNavigationProp = DrawerNavigationProp<any>;
 
 const Home = () => {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
@@ -31,10 +38,10 @@ const Home = () => {
   const [counts, setCounts] = useState<number[]>([]);
   const [fetchError, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const menuAnimation = useRef(new Animated.Value(-width * 0.75)).current;
-  const navigation = useNavigation();
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["25%", "60%"], []);
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const [visibleSheet, setVisibleSheet] = useState<boolean>(false);
 
   useEffect(() => {
@@ -67,24 +74,8 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-    Animated.timing(menuAnimation, {
-      toValue: menuVisible ? -width * 0.75 : 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["25%", "60%"], []); 
-
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
-  }, []);
-
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
   }, []);
 
   const handleCloseSheet = () => {
@@ -109,118 +100,59 @@ const Home = () => {
 
   const { handleSignOut } = useAuth();
 
-  const handleTouchOutsideMenu = () => {
-    if (menuVisible) {
-      toggleMenu();
-    }
-  };
-
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView className="flex-1">
       <SafeAreaView className="flex-1">
-        {/* Side Menu */}
-        <Animated.View
-          className="absolute left-0 top-0 bottom-0 bg-white z-50 pt-12 px-4"
-          style={{ transform: [{ translateX: menuAnimation }], width: width * 0.65 }}
-        >
-          <TouchableOpacity onPress={toggleMenu} className="pl-4">
-            <Octicons name="x" size={28} color="#ca681c" />
-          </TouchableOpacity>
-
-          {/* Profile */}
-          <Link href="/profile" asChild>
-            <TouchableOpacity className="flex-row items-center py-4">
-              <FontAwesome name="user" size={24} color="#ca681c" />
-              <Text className="text-lg ml-4">Profile</Text>
-            </TouchableOpacity>
-          </Link>
-
-          {/* Cart */}
-          <Link href="/cart" asChild>
-            <TouchableOpacity className="flex-row items-center py-4">
-              <AntDesign name="shoppingcart" size={24} color="#ca681c" />
-              <Text className="text-lg ml-4">Cart</Text>
-            </TouchableOpacity>
-          </Link>
-
-          {/* Orders */}
-          <Link href="/(root)/(tabs)/orders" asChild>
-            <TouchableOpacity className="flex-row items-center py-4">
-              <MaterialIcons name="receipt" size={24} color="#ca681c" />
-              <Text className="text-lg ml-4">Orders</Text>
-            </TouchableOpacity>
-          </Link>
-
-          {/* Contact */}
-          <Link href="/contact" asChild>
-            <TouchableOpacity className="flex-row items-center py-4">
-              <Entypo name="phone" size={24} color="#ca681c" />
-              <Text className="text-lg ml-4">Contact</Text>
-            </TouchableOpacity>
-          </Link>
-
-          <TouchableOpacity
-            className="flex-row items-center absolute bottom-8 left-4"
-            onPress={handleSignOut}
-          >
-            <AntDesign name="logout" size={24} color="#ca681c" />
-            <Text className="text-lg ml-4">Sign Out</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Main Content */}
-        <TouchableWithoutFeedback onPress={handleTouchOutsideMenu}>
-          <View className="flex-1">
-            <View className="flex-row items-center justify-between gap-3 p-4">
-              <TouchableOpacity onPress={toggleMenu}>
-                <Octicons name="three-bars" size={24} color="#ca681c" />
+        <ScrollView className="flex-1 ">
+          <View className="p-4">
+            <View className="flex-row justify-between items-center">
+              <TouchableOpacity onPress={() => navigation.toggleDrawer()} className="pr-4">
+                <Octicons name="three-bars" size={28} color="#ca681c" />
               </TouchableOpacity>
-              <View className="flex-1 pl-5">
+              <View className="flex-1 mt-2">
                 <Text className="font-bold">Deliver To</Text>
-                <Text className="text-gray-500 mt-1">{displayCurrentAddress}</Text>
+                <Text className="text-gray-500 flex-wrap">
+                  {displayCurrentAddress}
+                </Text>
               </View>
               <Link href="/cart" asChild>
-                <TouchableOpacity className="px-3 py-2 rounded-md bg-red-500 mt-5">
+                <TouchableOpacity className="ml-2 mt-3 bg-[#E52B50] rounded-[12px] p-2">
                   <Text className="text-white font-bold">Go to Cart</Text>
                 </TouchableOpacity>
               </Link>
             </View>
-
-            <View className="flex-row items-center justify-between border border-primary-400 rounded-lg px-2 mx-3 my-2">
-              <TextInput
-                className="flex-1 p-2"
-                placeholder="Search for food, hotels"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-              <AntDesign name="search1" size={24} color="#E52B50" />
-            </View>
-
-            <ScrollView className="bg-gray-100">
-              <Text className="mx-3 text-lg text-gray-600 tracking-wide my-2">
-                Explore
-              </Text>
-
-              {/* Use filtered data to display products */}
-              {filteredData && 
-                filteredData.map((item) => (
-                  <ItemCards
-                    key={item.id}
-                    item={{
-                      id: item.id,
-                      name: item.Product_name,
-                      image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
-                      time: "",
-                      type: item.Product_weight + "g",
-                      price: item.Product_price,
-                    }}
-                    onItemPress={handleItemPress}
-                  />
-                ))
-              }
-            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
+
+          <View className="flex-row border border-red-600 rounded-[18px] m-4 items-center  pr-2">
+  <TextInput
+    className="flex-1 p-2" 
+    placeholder="Search...."
+    value={searchQuery}
+    onChangeText={setSearchQuery}
+  />
+  <AntDesign name="search1" size={28} color="#E52B50" className="ml-4" />
+</View>
+
+
+
+
+          <Text className="ml-4 text-lg text-gray-500">Explore</Text>
+
+          {filteredData && filteredData.map((item) => (
+            <ItemCards
+              key={item.id}
+              item={{
+                id: item.id,
+                name: item.Product_name,
+                image: `https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Image/${item.id}.jpg`,
+                time: "",
+                type: item.Product_weight + "g",
+                price: item.Product_price,
+              }}
+              onItemPress={handleItemPress}
+            />
+          ))}
+        </ScrollView>
 
         {visibleSheet && (
           <BottomSheetModalProvider>
@@ -228,7 +160,6 @@ const Home = () => {
               ref={bottomSheetModalRef}
               index={1}
               snapPoints={snapPoints}
-              onChange={handleSheetChanges}
               onDismiss={handleCloseSheet}
               enableDismissOnClose={true}
               enablePanDownToClose={true}
@@ -247,4 +178,18 @@ const Home = () => {
   );
 };
 
-export default Home;
+const Drawer = createDrawerNavigator();
+
+const App = () => {
+  return (
+    <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />} screenOptions={{ headerShown: false }}>
+      <Drawer.Screen name="Home" component={Home} />
+      <Drawer.Screen name="Profile" component={Profile} />
+      <Drawer.Screen name="Cart" component={Cart} />
+      <Drawer.Screen name="Orders" component={Orders} />
+      <Drawer.Screen name="Contact" component={Contact} />
+    </Drawer.Navigator>
+  );
+};
+
+export default App;

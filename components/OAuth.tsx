@@ -15,7 +15,6 @@ import { supabase } from "@/lib/supabase";
 const OAuth = () => {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  
 
   GoogleSignin.configure({
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
@@ -45,58 +44,64 @@ const OAuth = () => {
       await GoogleSignin.hasPlayServices();
       const result = await GoogleSignin.signIn();
       const userData = result.data?.user;
-  
+
+      if (!userData) {
+        // If the user dismissed the sign-in modal, do nothing
+        return;
+      }
+
       // Check if the user already exists in the database based on email
       const { data: existingUser, error: fetchError } = await supabase
-        .from('User')
-        .select('*')
-        .eq('Email', result.data?.user.email)
+        .from("User")
+        .select("*")
+        .eq("Email", result.data?.user.email)
         .single(); // Ensure we only get one result
-  
-      if (fetchError && fetchError.code !== 'PGRST116') {
+
+      if (fetchError && fetchError.code !== "PGRST116") {
         // Handle error in the fetch
-        console.error('Error checking existing user:', fetchError);
+        console.error("Error checking existing user:", fetchError);
         Alert.alert("Error", "Failed to check user in the database.");
         return;
       }
-  
+
       if (existingUser) {
         // User already exists
-        console.log('Signed in');
+        console.log("Signed in");
       } else {
         // Insert the new user data into Supabase
         const userToInsert = {
-          Token: result.data?.user.id,  // token_id from Google
+          Token: result.data?.user.id, // token_id from Google
           Name: result.data?.user.name,
           Email: result.data?.user.email,
           Image: result.data?.user.photo,
         };
-  
+
         const { data, error } = await supabase
-          .from('User')
+          .from("User")
           .insert([userToInsert]);
-  
+
         if (error) {
-          console.error('Error inserting user data:', error);
+          console.error("Error inserting user data:", error);
           Alert.alert("Error", "Failed to insert user data into the database.");
           return;
         } else {
-          console.log('User inserted:', userToInsert);
+          console.log("User inserted:", userToInsert);
         }
       }
-      const savemail = result.data?.user.email || '';  // Default to an empty string if undefined
-      console.log("OAuth",savemail);
-      await AsyncStorage.setItem('savemail', savemail);
-await AsyncStorage.setItem('userInfo', JSON.stringify(userData));  // Save user data
 
-      // Save user data locally
-      await AsyncStorage.setItem('userInfo', JSON.stringify(userData));
+      const savemail = result.data?.user.email || ""; // Default to an empty string if undefined
+      console.log("OAuth", savemail);
+      await AsyncStorage.setItem("savemail", savemail);
+      await AsyncStorage.setItem("userInfo", JSON.stringify(userData)); // Save user data
+
       setUserInfo(userData as unknown as User);
       setIsSignedIn(true);
       router.replace("/(root)/(tabs)/home");
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert("Sign-in was cancelled by the user");
+        // User pressed outside the Google sign-in screen or cancelled
+        console.log("Sign-in was cancelled");
+        Alert.alert("Sign-in was cancelled by the user.");
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Alert.alert("Sign-in is in progress");
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -110,11 +115,6 @@ await AsyncStorage.setItem('userInfo', JSON.stringify(userData));  // Save user 
   return (
     <View>
       {!isSignedIn && (
-        // <GoogleSigninButton
-        //   size={GoogleSigninButton.Size.Wide}
-        //   color={GoogleSigninButton.Color.Dark}
-        //   onPress={handleGoogleSignIn}
-        // />
         <CustomButton
           title="Log In with Google"
           className="mt-5 w-full shadow-none"

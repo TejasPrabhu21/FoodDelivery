@@ -1,14 +1,7 @@
-import {
-  CheckIfLocationEnabled,
-  GetCurrentLocation,
-} from "@/app/lib/location-utils";
+import { CheckIfLocationEnabled, GetCurrentLocation } from "@/app/lib/location-utils";
 import CartItemCard from "@/components/CartItemCard";
 import { icons, images } from "@/constants";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/providers/AuthProvider";
-import { CartContext, useCart } from "@/providers/CartProvider";
-import { Product } from "@/types/type";
-import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -22,45 +15,47 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AntDesign } from "@expo/vector-icons";
 import { handlePayment } from "../../../lib/Razorpay";
+import { useCart } from "@/providers/CartProvider";
 
 const Cart = () => {
   const { items, totalPrice } = useCart();
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
-  const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
-    "Fetching your location ..."
-  );
-  const [editableAddress, setEditableAddress] = useState(displayCurrentAddress);
+  const [editableAddress, setEditableAddress] = useState("Fetching your location ...");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState(false);
+  const [savemail, setSavemail] = useState<string | null>(null);
+  const [isLocationFetched, setIsLocationFetched] = useState(false); // New state variable
+  const [EditableAddressError, setEditableAddressError]=useState(false);
+
+  const { clearCart } = useCart();
 
   const deliveryFee = totalPrice < 2000 ? 100 : 0;
   const finalTotalPrice = totalPrice + deliveryFee;
 
   useEffect(() => {
     const setLocation = async () => {
-      setLocationServicesEnabled(await CheckIfLocationEnabled());
-      const location = await GetCurrentLocation();
-      setDisplayCurrentAddress(location ?? "Location not detected ...");
-      setEditableAddress(location ?? "Location not detected ...");
+      const isLocationEnabled = await CheckIfLocationEnabled();
+      const location = await GetCurrentLocation() || "Location not detected ...";
+      setLocationServicesEnabled(isLocationEnabled);
+      setEditableAddress(location);
+      setIsLocationFetched(true); // Set location fetched to true after fetching
     };
     setLocation();
   }, []);
 
-  const [savemail, setSavemail] = useState<string | null>(null);
-  const [phone, setPhone] = useState<string | null>(null);
-
-
   useEffect(() => {
-    const fetchEmail = async () => {
+    const fetchUserData = async () => {
       try {
         const storedEmail = await AsyncStorage.getItem("savemail");
-        if (storedEmail) {
-          setSavemail(storedEmail);
-          console.log(storedEmail);
+        if (!storedEmail) {
+          console.error("No email found");
+          return;
+        }
+        setSavemail(storedEmail);
 
-          // fetch phone number of the user through email from User table 
-          const { data: userData, error: userError } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from("User")
           .select("Phone")
           .eq("Email", storedEmail)
@@ -69,32 +64,23 @@ const Cart = () => {
         if (userError) {
           console.error("Error fetching user phone number:", userError.message);
         } else if (userData) {
-          setPhone(userData.Phone);
-          setPhoneNumber(userData.Phone||''); // Set the phone number in the input field
-        }
-
-
-        } else {
-          console.error("No email found");
+          setPhoneNumber(userData.Phone || '');
         }
       } catch (error) {
         console.error("Error retrieving savemail:", error);
       }
     };
 
-    fetchEmail();
+    fetchUserData();
   }, []);
 
   const InsertData = async () => {
-    if (!phoneNumber || phoneNumber.length !== 10) {
-      setPhoneNumberError(true);
+    if (!editableAddress || editableAddress === "Fetching your location ...") {
+      setEditableAddressError(true);
       return;
     }
-    console.log(savemail);
-    const userEmail = savemail;
-
-    if (!userEmail) {
-      Alert.alert("Error", "User email not found.");
+    if (!phoneNumber || phoneNumber.length !== 10) {
+      setPhoneNumberError(true);
       return;
     }
 
@@ -102,18 +88,27 @@ const Cart = () => {
       const { data: userData, error: userError } = await supabase
         .from("User")
         .select("*")
-        .eq("Email", userEmail)
+        .eq("Email", savemail)
         .single();
 
-      if (userError) {
-        throw new Error(`Error fetching user: ${userError.message}`);
-      }
-      const userId = userData?.User_id;
 
-      if (!userId) {
-        throw new Error("User ID not found.");
+      if (userError || !userData?.User_id) {
+        throw new Error(userError ? `Error fetching user: ${userError.message}` : "User ID not found.");
       }
 
+    
+
+      const userId = userData.User_id;
+
+      // Update the user's phone number where User_id matches
+      const { error: phoneUpdateError } = await supabase
+        .from("User")
+        .update({ Phone: phoneNumber })
+        .eq("User_id", userId);
+  
+      if (phoneUpdateError) {
+        throw new Error(`Error updating phone number: ${phoneUpdateError.message}`);
+      }
       const { data: orderData, error: orderError } = await supabase
         .from("Order")
         .insert({
@@ -127,8 +122,8 @@ const Cart = () => {
           Payment_Status: "Pending",
         })
         .select("Order_id");
-
-      if (orderError) {
+      
+      if (orderError || !orderData) {
         throw new Error(`Error inserting order: ${orderError.message}`);
       }
 
@@ -149,7 +144,13 @@ const Cart = () => {
       }
 
       console.log("Order placed successfully! Order ID:", orderId);
-      handlePayment(orderId, userId, finalTotalPrice);
+      const userDetails={
+        Name:userData.Name,
+        Phone:phoneNumber,             
+        Email:userData.Email,
+      }
+      
+      handlePayment(orderId, userId, finalTotalPrice,userDetails, clearCart);
     } catch (err: any) {
       console.error("Error inserting order:", err);
       Alert.alert("Order Error", err.message);
@@ -166,20 +167,13 @@ const Cart = () => {
           <Text className="text-xl font-bold">Cart</Text>
         </View>
 
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          className="flex-1"
-        >
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} className="flex-1">
           {items.length > 0 ? (
             <View className="p-4">
               <View className="mb-4 border-b-2 border-gray-200 pb-2">
                 <Text className="text-lg font-bold">Deliver To</Text>
                 <TextInput
-                  className={`border p-2 rounded-md mt-2 ${
-                    editableAddress !== displayCurrentAddress
-                      ? "border-blue-500"
-                      : "border-gray-400"
-                  }`}
+                  className={`border p-2 rounded-md mt-2 ${EditableAddressError ? "border-red-500" : "border-gray-400"}`}
                   placeholder="Enter delivery address"
                   value={editableAddress}
                   onChangeText={(value) => setEditableAddress(value)}
@@ -189,9 +183,7 @@ const Cart = () => {
               <View className="mb-4 border-b-2 border-gray-200 pb-2">
                 <Text className="text-lg font-bold">Phone Number</Text>
                 <TextInput
-                  className={`border p-2 rounded-md mt-2 ${
-                    phoneNumberError ? "border-red-500" : "border-gray-400"
-                  }`}
+                  className={`border p-2 rounded-md mt-2 ${phoneNumberError ? "border-red-500" : "border-gray-400"}`}
                   placeholder="Enter phone number"
                   keyboardType="phone-pad"
                   value={phoneNumber}
@@ -201,9 +193,7 @@ const Cart = () => {
                   }}
                 />
                 {phoneNumberError && (
-                  <Text className="text-red-500 text-xs mt-1">
-                    Phone number is required
-                  </Text>
+                  <Text className="text-red-500 text-xs mt-1">Phone number is required</Text>
                 )}
               </View>
 
@@ -213,14 +203,8 @@ const Cart = () => {
             </View>
           ) : (
             <View className="flex-1 justify-center items-center mt-5">
-              <Image
-                source={icons.arrowDown}
-                className="w-24 h-24 opacity-10"
-                resizeMode="contain"
-              />
-              <Text className="text-xl text-center text-gray-500">
-                Your cart is empty!
-              </Text>
+              <Image source={icons.arrowDown} className="w-24 h-24 opacity-10" resizeMode="contain" />
+              <Text className="text-xl text-center text-gray-500">Your cart is empty!</Text>
             </View>
           )}
 
@@ -228,13 +212,8 @@ const Cart = () => {
             <View className="mb-5 mx-5">
               <Text className="text-lg font-bold">Billing Details</Text>
               {items.map((item) => (
-                <View
-                  key={item.id}
-                  className="flex-row justify-between my-1"
-                >
-                  <Text className="text-base">
-                    {item.name} (x{item.quantity})
-                  </Text>
+                <View key={item.id} className="flex-row justify-between my-1">
+                  <Text className="text-base">{item.name} (x{item.quantity})</Text>
                   <Text className="text-base">₹{item.price}</Text>
                 </View>
               ))}
@@ -254,18 +233,24 @@ const Cart = () => {
           )}
         </ScrollView>
 
-        {totalPrice > 0 && (
+
+
+      {totalPrice > 0 && (
           <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 rounded-t-lg">
             <View className="flex-row items-center mb-3">
               <Text className="text-lg font-bold mr-2">Pay With</Text>
               <Image
-                source={images.welcome}
-                className="w-7 h-7"
-                resizeMode="contain"
+                source={{ uri: 'https://qjvdrhwtxyceipxhqtdd.supabase.co/storage/v1/object/public/Product_image/Logo/Razorpay_logo.png' }}
+                className="w-14 h-14"
+                resizeMode="center"
               />
+
             </View>
-            <TouchableOpacity onPress={InsertData}>
-              <View className="flex-row items-center justify-between bg-green-600 p-3 rounded-md">
+            <TouchableOpacity
+              onPress={InsertData}
+              disabled={!isLocationFetched} // Disable button if location isn't fetched
+              className={` rounded-md ${isLocationFetched ? "bg-green-600" : "bg-gray-300"}`}>
+              <View className="flex-row items-center justify-between  p-3 rounded-md">
                 <Text className="text-lg text-white">{" ₹ "}{finalTotalPrice}</Text>
                 <View className="flex-row items-center">
                   <Text className="text-lg text-white">Place Order</Text>

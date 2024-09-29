@@ -1,12 +1,12 @@
 import { CartItem, Product } from "@/types/type";
 import { createContext, PropsWithChildren, useContext, useState } from "react";
-import { randomUUID } from "expo-crypto";
 
 type CartType = {
   totalPrice: number;
   items: CartItem[];
   addItem: (product: Product, quantity: number) => void;
   updateQuantity: (itemId: CartItem, amount: number) => void;
+  clearCart: () => void; // Add clearCart to the CartType
 };
 
 export const CartContext = createContext<CartType>({
@@ -14,6 +14,7 @@ export const CartContext = createContext<CartType>({
   items: [],
   addItem: () => {},
   updateQuantity: () => {},
+  clearCart: () => {}, // Provide a default empty function
 });
 
 const CartProvider = ({ children }: PropsWithChildren) => {
@@ -39,9 +40,8 @@ const CartProvider = ({ children }: PropsWithChildren) => {
     setItems([newCartItem, ...items]);
     setTotalPrice(() => totalPrice + newCartItem.price);
   };
-  
+
   const updateQuantity = (cartItem: CartItem, amount: number) => {
-    console.log(cartItem.price, amount);
     const updatedItem = items
       .map((item) =>
         item.id !== cartItem.id
@@ -55,12 +55,17 @@ const CartProvider = ({ children }: PropsWithChildren) => {
       .filter((item) => item.quantity > 0);
     setItems(updatedItem);
     setTotalPrice(() => totalPrice + cartItem.product.price * amount);
-    console.log("Amount",amount);
+  };
+
+  // Add the clearCart function
+  const clearCart = () => {
+    setItems([]);
+    setTotalPrice(0);
   };
 
   return (
     <CartContext.Provider
-      value={{ totalPrice, items, addItem, updateQuantity }}
+      value={{ totalPrice, items, addItem, updateQuantity, clearCart }} // Include clearCart in the context
     >
       {children}
     </CartContext.Provider>

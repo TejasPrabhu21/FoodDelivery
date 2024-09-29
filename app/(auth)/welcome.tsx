@@ -17,7 +17,7 @@ const Onboarding = () => {
         <Text className="text-black text-md font-JakartaBold">Skip</Text>
       </TouchableOpacity>
 
-      <View className=" flex items-center justify-center p-5">
+      <View className=" flex items-center justify-center p-15">
         <Image
           source={images.welcome}
           className=" w-[300px] h-[300px]"
