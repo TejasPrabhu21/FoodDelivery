@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Food-Delivery-Dev",
-    "slug": "Food-Delivery-Dev",
+    "name": "UK Tasty",
+    "slug": "UK Tasty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -40,6 +40,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "48ec9625-6768-4a23-8672-b43362b230e8"
+      }
     }
   }
 }

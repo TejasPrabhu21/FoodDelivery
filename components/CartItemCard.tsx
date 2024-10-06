@@ -21,7 +21,7 @@ const CartItemCard = ({ item }: { item: CartItem }) => {
   return (
     <View
       key={item.id}
-      className="flex flex-row bg-white rounded-xl p-3 w-full my-2"
+      className="flex flex-row bg-white rounded-xl w-full my-2"
     >
       <Image
         className=" w-24 h-24 rounded-lg"

@@ -49,8 +49,10 @@ const Contact = () => {
           <MaterialIcons name="location-on" size={28} color="#ca681c" />
           <View className="ml-4">
             <Text className="text-lg font-bold text-gray-800 mb-1">Address</Text>
-            <Text className="text-base text-gray-600">Canara, Barebail,</Text>
-            <Text className="text-base text-gray-600">Mangalore 575004</Text>
+            <Text className="text-base text-gray-600">Vanadurga Complex, First Floor,</Text>
+            <Text className="text-base text-gray-600">Kodi Fisheries Road, Sastana,</Text>
+            <Text className="text-base text-gray-600">Brahmavara Tq and Udupi Dist.</Text>
+            <Text className="text-base text-gray-600">PIN:576226</Text>
           </View>
         </View>
       </ScrollView>

@@ -40,7 +40,7 @@ const Home = () => {
   const [status, setStatus] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["25%", "60%"], []);
+  const snapPoints = useMemo(() => ["25%", "70%"], []);
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [visibleSheet, setVisibleSheet] = useState<boolean>(false);
 

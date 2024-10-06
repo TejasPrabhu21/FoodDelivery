@@ -17,15 +17,15 @@ const Onboarding = () => {
         <Text className="text-black text-md font-JakartaBold">Skip</Text>
       </TouchableOpacity>
 
-      <View className=" flex items-center justify-center p-15">
+      <View className="flex items-center justify-center p-15">
         <Image
           source={images.welcome}
-          className=" w-[300px] h-[300px]"
+          className="w-[300px] h-[300px]"
           resizeMode="contain"
         />
-        <View className=" flex items-center justify-center w-full mt-10">
-          <Text className=" text-black text-3xl font-bold mx-10 text-center">
-            Kinara Tasty
+        <View className="flex items-center justify-center w-full mt-10">
+          <Text className="text-black text-3xl font-bold mx-10 text-center">
+            Udupi Kinara Tasty
           </Text>
         </View>
         {/* <Text className="text-md font-JakartaSemiBold text-center text-[#858585] mx-10 mt-3">
@@ -33,11 +33,32 @@ const Onboarding = () => {
           tenetur.
         </Text> */}
       </View>
-      <View className="mb-12">
-      <OAuth/>
-      </View>
 
-     
+      <View className="mb-12">
+  <OAuth />
+  <Text className="text-center text-sm text-[#858585] mt-4 mx-10">
+    By continuing, you agree to UK Tasty's{" "}
+    <Text
+      className="text-blue-500"
+      onPress={() => {
+        router.push("https://uk-tasty.vercel.app/termsOfService");
+      }}
+    >
+      Terms and Conditions
+    </Text>{" "}
+    and{" "}
+    <Text
+      className="text-blue-500"
+      onPress={() => {
+        router.push("https://uk-tasty.vercel.app/privacyPolicy");
+      }}
+    >
+      Privacy Policy
+    </Text>
+    .
+  </Text>
+</View>
+
     </SafeAreaView>
   );
 };
