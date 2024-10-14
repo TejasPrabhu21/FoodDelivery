@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Food-Delivery-Dev",
-    "slug": "Food-Delivery-Dev",
+    "name": "UK Tasty",
+    "slug": "UK Tasty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -26,7 +26,8 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ]
+      ],
+      "package": "com.Kinara.FoodDelivery"
     },
     "web": {
       "bundler": "metro",
@@ -34,10 +35,16 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-google-signin/google-signin",
       "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "48ec9625-6768-4a23-8672-b43362b230e8"
+      }
     }
   }
 }

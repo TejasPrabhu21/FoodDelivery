@@ -13,6 +13,9 @@ module.exports = {
         JakartaSemiBold: ["Jakarta-SemiBold", "sans-serif"],
       },
       colors: {
+        dash:{
+          100:"#9F5216" 
+        },
         primary: {
           // 100: "#F5F8FF",
           // 200: "#EBF4FF",
