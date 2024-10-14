@@ -25,11 +25,11 @@ import ItemCards from "@/components/ItemCards";
 import {
   CheckIfLocationEnabled,
   GetCurrentLocation,
-} from "@/app/lib/location-utils";
+} from "@/lib/location-utils";
 import { Product } from "@/types/type";
 import ItemDetails from "@/components/ItemDetails";
 import { supabase } from "@/lib/supabase";
-import { Link, useNavigation } from "expo-router";
+import { Link, router, useNavigation } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import Profile from "./profile";
@@ -39,7 +39,7 @@ import Contact from "./contact";
 import CustomDrawerContent from "@/components/CustomDrawer";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 
-const { width } = Dimensions.get("window");
+const { width, height: screenHeight } = Dimensions.get("window");
 
 type HomeScreenNavigationProp = DrawerNavigationProp<any>;
 
@@ -55,7 +55,12 @@ const Home = () => {
   const [status, setStatus] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["25%", "70%"], []);
+  const snapPoints = useMemo(() => {
+    const largeSnap = screenHeight * 0.85;
+    const mediumSnap = screenHeight * 0.6;
+    const smallSnap = screenHeight * 0.4;
+    return [largeSnap, mediumSnap, smallSnap];
+  }, [screenHeight]);
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [visibleSheet, setVisibleSheet] = useState<boolean>(false);
 
@@ -84,6 +89,7 @@ const Home = () => {
         setData(data ?? []);
         setStatus(status);
       } catch (error: any) {
+        router.push("/error");
         setError(error.message);
       }
     };
@@ -115,8 +121,6 @@ const Home = () => {
     item.Product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const { handleSignOut } = useAuth();
-
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaView className="flex-1">
@@ -136,8 +140,10 @@ const Home = () => {
                 </Text>
               </View>
               <Link href="/cart" asChild>
-                <TouchableOpacity className="ml-2 mt-3 bg-[#E52B50] rounded-[12px] p-2">
-                  <Text className="text-white font-bold">Go to Cart</Text>
+                <TouchableOpacity className="ml-2 mt-3 bg-[#E52B50] rounded-full p-2">
+                  <Text className="text-white font-bold">
+                    <AntDesign name="shoppingcart" size={32} color="white" />
+                  </Text>
                 </TouchableOpacity>
               </Link>
             </View>
@@ -145,8 +151,8 @@ const Home = () => {
 
           <View className="flex-row border border-red-600 rounded-[18px] m-4 items-center  pr-2">
             <TextInput
-              className="flex-1 p-2"
-              placeholder="Search...."
+              className="flex-1 p-2 px-4"
+              placeholder="Search for products"
               value={searchQuery}
               onChangeText={setSearchQuery}
             />

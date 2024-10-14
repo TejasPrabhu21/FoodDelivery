@@ -1,6 +1,6 @@
 import { AntDesign } from "@expo/vector-icons";
 import React, { useState, useRef, useEffect } from "react";
-import { View, Image, Text, Animated } from "react-native";
+import { View, Image, Text, Animated, ScrollView } from "react-native";
 import Counter from "./Counter";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Product } from "@/types/type";

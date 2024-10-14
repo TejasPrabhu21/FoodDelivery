@@ -69,7 +69,7 @@ const Profile = () => {
       setIsEditing(false);
       const updatedData = {
         Name: formData.name,
-        Phone: formData.phone || 'Optional',
+        Phone: formData.phone || "Optional",
       };
 
       const { error } = await supabase
@@ -101,17 +101,22 @@ const Profile = () => {
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="px-5 pb-32">
         {/* Header */}
-        <View className="flex-row items-center mt-3">
-          <TouchableOpacity onPress={() => router.back()} className="mr-2">
-            <AntDesign name="arrowleft" size={24} color="black" />
-          </TouchableOpacity>
-          <Text className="text-2xl font-bold">Profile</Text>
-        </View>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="flex-row items-center mt-3"
+        >
+          <AntDesign name="arrowleft" size={24} color="black" />
+          <Text className="text-2xl font-bold ml-4">Profile</Text>
+        </TouchableOpacity>
 
         {/* Profile Image */}
         <View className="items-center justify-center my-5">
           <Image
-            source={{ uri: saveImage || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' }}
+            source={{
+              uri:
+                saveImage ||
+                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
+            }}
             className="w-28 h-28 rounded-full border-3 border-white bg-gray-200 shadow-md"
           />
         </View>
@@ -122,7 +127,10 @@ const Profile = () => {
             <>
               <View className="flex-row justify-between items-center">
                 <Text>Info</Text>
-                <TouchableOpacity onPress={handleSave} className="flex-row items-center justify-end space-x-2 p-1 px-4 bg-red-50 rounded-full">
+                <TouchableOpacity
+                  onPress={handleSave}
+                  className="flex-row items-center justify-end space-x-2 p-1 px-4 bg-red-50 rounded-full"
+                >
                   <AntDesign name="check" size={24} color="green" />
                   <Text>Save</Text>
                 </TouchableOpacity>
@@ -164,7 +172,10 @@ const Profile = () => {
             <>
               <View className="flex-row justify-between items-center">
                 <Text>Info</Text>
-                <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center justify-end space-x-2 p-2 px-4 bg-red-50 rounded-full">
+                <TouchableOpacity
+                  onPress={() => setIsEditing(true)}
+                  className="flex-row items-center justify-end space-x-2 p-2 px-4 bg-red-50 rounded-full"
+                >
                   <AntDesign name="edit" size={20} color="green" />
                   <Text>Edit</Text>
                 </TouchableOpacity>
@@ -177,9 +188,13 @@ const Profile = () => {
               <Text className="text-lg font-bold">{formData.email}</Text>
 
               <Text className="mt-5 text-gray-600">Phone</Text>
-              <Text className="text-lg font-bold">
-                {formData.phone || "Optional"}
-              </Text>
+              {formData.phone ? (
+                <Text className="text-lg font-bold">{formData.phone}</Text>
+              ) : (
+                <Text className="text-lg font-normal opacity-50">
+                  Not Added
+                </Text>
+              )}
             </>
           )}
         </View>
@@ -200,9 +215,7 @@ const Profile = () => {
           className="mt-10 bg-red-600 rounded-lg p-4 flex-row items-center justify-center"
         >
           <AntDesign name="logout" size={24} color="white" />
-          <Text className="text-white font-bold text-lg ml-2">
-            Sign Out
-          </Text>
+          <Text className="text-white font-bold text-lg ml-2">Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
