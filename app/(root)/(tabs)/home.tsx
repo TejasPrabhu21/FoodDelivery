@@ -12,6 +12,7 @@ import {
   TextInput,
   TouchableOpacity,
   Dimensions,
+  BackHandler,
 } from "react-native";
 import { Octicons, AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -100,6 +101,23 @@ const Home = () => {
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      handleBackPress
+    );
+
+    return () => backHandler.remove();
+  }, [visibleSheet]);
+
+  const handleBackPress = () => {
+    if (visibleSheet) {
+      handleCloseSheet();
+      return true;
+    }
+    return false;
+  };
 
   const handleCloseSheet = () => {
     setVisibleSheet(false);

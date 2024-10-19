@@ -19,19 +19,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AntDesign } from "@expo/vector-icons";
-import { handlePayment } from "../../../lib/Razorpay";
+import { handlePayment } from "@/lib/Razorpay";
 import { useCart } from "@/providers/CartProvider";
 
 const Cart = () => {
   const { items, totalPrice } = useCart();
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
-  const [editableAddress, setEditableAddress] = useState(
+  const [deliveryAddress, setDeliveryAddress] = useState(
     "Fetching your location ..."
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState(false);
   const [savemail, setSavemail] = useState<string | null>(null);
-  const [isLocationFetched, setIsLocationFetched] = useState(false); // New state variable
+  const [isLocationFetched, setIsLocationFetched] = useState(false);
   const [EditableAddressError, setEditableAddressError] = useState(false);
 
   const { clearCart } = useCart();
@@ -42,11 +42,13 @@ const Cart = () => {
   useEffect(() => {
     const setLocation = async () => {
       const isLocationEnabled = await CheckIfLocationEnabled();
-      const location =
-        (await GetCurrentLocation()) || "Location not detected ...";
       setLocationServicesEnabled(isLocationEnabled);
-      setEditableAddress(location);
-      setIsLocationFetched(true); // Set location fetched to true after fetching
+      if (isLocationEnabled) {
+        const location =
+          (await GetCurrentLocation()) || "Location not detected ...";
+        setDeliveryAddress(location);
+        setIsLocationFetched(true);
+      }
     };
     setLocation();
   }, []);
@@ -56,7 +58,6 @@ const Cart = () => {
       try {
         const storedEmail = await AsyncStorage.getItem("savemail");
         if (!storedEmail) {
-          console.error("No email found");
           return;
         }
         setSavemail(storedEmail);
@@ -74,7 +75,6 @@ const Cart = () => {
         }
       } catch (error) {
         router.push("/error");
-        console.error("Error retrieving savemail:", error);
       }
     };
 
@@ -82,7 +82,7 @@ const Cart = () => {
   }, []);
 
   const InsertData = async () => {
-    if (!editableAddress || editableAddress === "Fetching your location ...") {
+    if (!deliveryAddress || deliveryAddress === "Fetching your location ...") {
       setEditableAddressError(true);
       return;
     }
@@ -125,7 +125,7 @@ const Cart = () => {
           Order_date: new Date().toISOString(),
           User_id: userId,
           Order_Status: "Pending",
-          Address: editableAddress,
+          Address: deliveryAddress,
           Total_Amount: totalPrice,
           Delivery_Fee: deliveryFee,
           Payment_Method: "online",
@@ -155,7 +155,6 @@ const Cart = () => {
         );
       }
 
-      console.log("Order placed successfully! Order ID:", orderId);
       const userDetails = {
         Name: userData.Name,
         Phone: phoneNumber,
@@ -164,10 +163,19 @@ const Cart = () => {
 
       handlePayment(orderId, userId, finalTotalPrice, userDetails, clearCart);
     } catch (err: any) {
-      console.error("Error inserting order:", err);
-      Alert.alert("Order Error", err.message);
+      Alert.alert(
+        "There was an error while placing your order. Please try again later."
+      );
     }
   };
+
+  const isValidAddress =
+    deliveryAddress &&
+    deliveryAddress !== "Fetching your location ..." &&
+    !EditableAddressError;
+  const isValidPhoneNumber =
+    phoneNumber && phoneNumber.length === 10 && !phoneNumberError;
+  const isFormValid = isValidAddress && isValidPhoneNumber;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -191,23 +199,32 @@ const Cart = () => {
                 <TextInput
                   className={`border p-2 rounded-md mt-2 ${EditableAddressError ? "border-red-500" : "border-gray-400"}`}
                   placeholder="Enter delivery address"
-                  value={editableAddress}
-                  onChangeText={(value) => setEditableAddress(value)}
+                  value={deliveryAddress}
+                  onChangeText={(value) => setDeliveryAddress(value)}
                 />
               </View>
 
               <View className="mb-4 border-b-2 border-gray-200 pb-2">
                 <Text className="text-lg font-bold">Phone Number</Text>
-                <TextInput
-                  className={`border p-2 rounded-md mt-2 ${phoneNumberError ? "border-red-500" : "border-gray-400"}`}
-                  placeholder="Enter phone number"
-                  keyboardType="phone-pad"
-                  value={phoneNumber}
-                  onChangeText={(value) => {
-                    setPhoneNumber(value);
-                    setPhoneNumberError(false);
-                  }}
-                />
+                <View className="flex-row items-center mt-2">
+                  <View className="bg-gray-100 p-2 rounded-l-md border border-gray-400">
+                    <Text className="text-base">+91</Text>
+                  </View>
+                  <TextInput
+                    className={`flex-1 border p-2 rounded-r-md ${
+                      phoneNumberError ? "border-red-500" : "border-gray-400"
+                    }`}
+                    placeholder="Enter phone number"
+                    keyboardType="phone-pad"
+                    value={phoneNumber}
+                    maxLength={10}
+                    onChangeText={(value) => {
+                      const numericValue = value.replace(/[^0-9]/g, "");
+                      setPhoneNumber(numericValue);
+                      setPhoneNumberError(false);
+                    }}
+                  />
+                </View>
                 {phoneNumberError && (
                   <Text className="text-red-500 text-xs mt-1">
                     Phone number is required
@@ -273,17 +290,27 @@ const Cart = () => {
             </View>
             <TouchableOpacity
               onPress={InsertData}
-              disabled={!isLocationFetched} // Disable button if location isn't fetched
-              className={` rounded-md ${isLocationFetched ? "bg-green-600" : "bg-gray-300"}`}
+              disabled={!isFormValid}
+              className={`rounded-md ${isFormValid ? "bg-green-600" : "bg-gray-300"}`}
             >
-              <View className="flex-row items-center justify-between  p-3 rounded-md">
-                <Text className="text-lg text-white">
+              <View className="flex-row items-center justify-between p-3 rounded-md">
+                <Text
+                  className={`text-lg ${isFormValid ? "text-white" : "text-gray-500"}`}
+                >
                   {" ₹ "}
                   {finalTotalPrice}
                 </Text>
                 <View className="flex-row items-center">
-                  <Text className="text-lg text-white">Place Order</Text>
-                  <AntDesign name="right" size={24} color="white" />
+                  <Text
+                    className={`text-lg ${isFormValid ? "text-white" : "text-gray-500"}`}
+                  >
+                    Place Order
+                  </Text>
+                  <AntDesign
+                    name="right"
+                    size={24}
+                    color={isFormValid ? "white" : "gray"}
+                  />
                 </View>
               </View>
             </TouchableOpacity>

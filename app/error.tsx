@@ -14,7 +14,7 @@ const ErrorPage = () => {
         We're sorry, but an unexpected error occurred. Please try again later.
       </Text>
       <TouchableOpacity
-        onPress={() => router.replace("/")}
+        onPress={() => router.replace("/home")}
         className="bg-[#ca681c] py-3 px-6 rounded-full"
       >
         <Text className="text-white font-bold text-lg">Go to Home</Text>
